@@ -20,4 +20,5 @@ export class JsBindings implements WasmBindgen {
   init_state: (starting_bet: number, rules: BlackjackRuleset) => BlackjackState = undefined as any;
   next_state: (game: BlackjackState, action?: PlayerAction) => BlackjackState = undefined as any;
   allowed_actions: (game: BlackjackState) => PlayerAction[] = undefined as any;
+  monte_carlo: (iterations: number) => void = undefined as any;
 }

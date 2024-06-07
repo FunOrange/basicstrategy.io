@@ -33,3 +33,7 @@ export function next_state(game: any, action: any): any;
 * @returns {any}
 */
 export function allowed_actions(game: any): any;
+/**
+* @param {number} iterations
+*/
+export function monte_carlo(iterations: number): void;

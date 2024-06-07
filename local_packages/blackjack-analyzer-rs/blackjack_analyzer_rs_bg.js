@@ -255,6 +255,15 @@ export function allowed_actions(game) {
     return takeObject(ret);
 }
 
+/**
+* @param {number} duration_ms
+* @returns {number}
+*/
+export function monte_carlo(duration_ms) {
+    const ret = wasm.monte_carlo(duration_ms);
+    return ret >>> 0;
+}
+
 function handleError(f, args) {
     try {
         return f.apply(this, args);

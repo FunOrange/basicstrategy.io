@@ -99,8 +99,16 @@ function Game({ Blackjack }: { Blackjack: BlackjackJsBindings }) {
     setGame(_game);
   };
 
+  const monteCarlo = () => {
+    const iterations = 130_000;
+    console.time(iterations.toLocaleString());
+    Blackjack.monte_carlo(iterations);
+    console.timeEnd(iterations.toLocaleString());
+  };
+
   return (
     <div className="flex flex-col gap-2">
+      <button onClick={monteCarlo}>stress test</button>
       {!game && (
         <button
           className="rounded transition-colors bg-slate-700 hover:bg-slate-600 px-4 py-2"
