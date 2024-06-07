@@ -1,0 +1,16 @@
+{
+  "name": "blackjack-analyzer-rs",
+  "version": "0.1.0",
+  "files": [
+    "blackjack_analyzer_rs_bg.wasm",
+    "blackjack_analyzer_rs.js",
+    "blackjack_analyzer_rs_bg.js",
+    "blackjack_analyzer_rs.d.ts"
+  ],
+  "module": "blackjack_analyzer_rs.js",
+  "types": "blackjack_analyzer_rs.d.ts",
+  "sideEffects": [
+    "./blackjack_analyzer_rs.js",
+    "./snippets/*"
+  ]
+}

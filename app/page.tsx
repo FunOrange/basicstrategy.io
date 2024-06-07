@@ -1,6 +1,19 @@
+"use client";
+import { BlackjackState, GameState, PlayerAction } from "@/types/blackjack";
+import { JsBindings as BlackjackJsBindings } from "@/types/blackjack-analyzer-rs-bindings";
+import { BlackjackRuleset, DoubleDownOn, MaxHandsAfterSplit, SplitAces } from "@/types/ruleset";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [Blackjack, setBlackjack] = useState<BlackjackJsBindings>();
+  useEffect(() => {
+    (async () => {
+      const Blackjack = await import("@/local_packages/blackjack-analyzer-rs");
+      setBlackjack(Blackjack as any as BlackjackJsBindings);
+    })();
+  }, []);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
@@ -39,75 +52,90 @@ export default function Home() {
         />
       </div>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      {Boolean(Blackjack) && <Game Blackjack={Blackjack!} />}
     </main>
+  );
+}
+
+function Game({ Blackjack }: { Blackjack: BlackjackJsBindings }) {
+  const [game, setGame] = useState<BlackjackState>();
+  const [allowedActions, setAllowedActions] = useState<PlayerAction[]>([]);
+
+  const init = async () => {
+    const rules: BlackjackRuleset = Blackjack.create_ruleset(
+      /*surrender*/ true,
+      /*dealer_stands_on_all_17*/ true,
+      /*dealer_peeks*/ true,
+      /*split_aces*/ SplitAces.Twice,
+      /*hit_on_split_ace*/ false,
+      /*max_hands_after_split*/ MaxHandsAfterSplit.Three,
+      /*double_down_on*/ DoubleDownOn.Any,
+      /*double_after_split*/ true,
+      /*double_on_split_ace*/ false,
+      /*blackjack_payout*/ 3.0 / 2.0,
+      /*ace_and_ten_counts_as_blackjack*/ true,
+      /*split_ace_can_be_blackjack*/ false
+    );
+    console.debug("rules", rules);
+    const game = Blackjack.init_state(1, rules);
+    console.debug("game", game);
+    setGame(game);
+  };
+
+  const nextState = () => {
+    const _game = Blackjack.next_state(game!);
+    console.debug("_game", _game);
+    setGame(_game);
+    if (_game.state === GameState.PlayerTurn) {
+      const allowed_actions = Blackjack.allowed_actions(_game);
+      console.debug("allowed_actions", allowed_actions);
+      setAllowedActions(allowed_actions);
+    }
+  };
+
+  const handlePlayerAction = (action: PlayerAction) => {
+    const _game = Blackjack.next_state(game!, action);
+    console.debug("_game", _game);
+    setGame(_game);
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      {!game && (
+        <button
+          className="rounded transition-colors bg-slate-700 hover:bg-slate-600 px-4 py-2"
+          onClick={init}
+        >
+          init
+        </button>
+      )}
+      {game && game.state !== GameState.PlayerTurn ? (
+        <button
+          className="rounded transition-colors bg-slate-700 hover:bg-slate-600 px-4 py-2"
+          onClick={nextState}
+        >
+          Next state
+        </button>
+      ) : (
+        Object.values([
+          PlayerAction.Hit,
+          PlayerAction.Stand,
+          PlayerAction.DoubleDown,
+          PlayerAction.Split,
+          PlayerAction.Surrender,
+        ]).map(
+          (action, i) =>
+            allowedActions.includes(action as PlayerAction) && (
+              <button
+                className="rounded transition-colors bg-slate-700 hover:bg-slate-600 px-4 py-2"
+                key={i}
+                onClick={() => handlePlayerAction(action as PlayerAction)}
+              >
+                {action}
+              </button>
+            )
+        )
+      )}
+    </div>
   );
 }
