@@ -1,67 +1,45 @@
-"use client";
-import { BlackjackState, GameState, PlayerAction } from "@/types/blackjack";
-import { JsBindings as BlackjackJsBindings } from "@/types/blackjack-analyzer-rs-bindings";
-import { BlackjackRuleset, DoubleDownOn, MaxHandsAfterSplit, SplitAces } from "@/types/ruleset";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+'use client';
+import {
+  type BlackjackJsBindings as Blackjack,
+  type BlackjackState,
+  GameState,
+  type HandOutcome,
+  LossReason,
+  PlayerAction,
+  WinReason,
+  type BlackjackRuleset,
+  DoubleDownOn,
+  MaxHandsAfterSplit,
+  SplitAces,
+} from '@/types/blackjack-analyzer-rs';
+import { useEffect, useState } from 'react';
+import Card from '@/components/Card';
+import { sleep } from '@/utils/time';
+import { match } from 'ts-pattern';
+import { cn } from '@/utils/css';
+import { Button, ButtonProps } from 'antd';
 
 export default function Home() {
-  const [Blackjack, setBlackjack] = useState<BlackjackJsBindings>();
+  const [Blackjack, setBlackjack] = useState<Blackjack>();
   useEffect(() => {
     (async () => {
-      const Blackjack = await import("@/local_packages/blackjack-analyzer-rs");
-      setBlackjack(Blackjack as any as BlackjackJsBindings);
+      const Blackjack = await import('@/local_packages/blackjack-analyzer-rs');
+      setBlackjack(Blackjack as any as Blackjack);
     })();
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
+    <main className='flex items-center justify-center w-screen h-screen'>
       {Boolean(Blackjack) && <Game Blackjack={Blackjack!} />}
     </main>
   );
 }
 
-function Game({ Blackjack }: { Blackjack: BlackjackJsBindings }) {
+function Game({ Blackjack }: { Blackjack: Blackjack }) {
   const [game, setGame] = useState<BlackjackState>();
   const [allowedActions, setAllowedActions] = useState<PlayerAction[]>([]);
 
-  const init = async () => {
+  const startGame = async () => {
     const rules: BlackjackRuleset = Blackjack.create_ruleset(
       /*surrender*/ true,
       /*dealer_stands_on_all_17*/ true,
@@ -74,29 +52,33 @@ function Game({ Blackjack }: { Blackjack: BlackjackJsBindings }) {
       /*double_on_split_ace*/ false,
       /*blackjack_payout*/ 3.0 / 2.0,
       /*ace_and_ten_counts_as_blackjack*/ true,
-      /*split_ace_can_be_blackjack*/ false
+      /*split_ace_can_be_blackjack*/ false,
     );
-    console.debug("rules", rules);
-    const game = Blackjack.init_state(1, rules);
-    console.debug("game", game);
+    let game = Blackjack.init_state(1, rules);
     setGame(game);
-  };
-
-  const nextState = () => {
-    const _game = Blackjack.next_state(game!);
-    console.debug("_game", _game);
-    setGame(_game);
-    if (_game.state === GameState.PlayerTurn) {
-      const allowed_actions = Blackjack.allowed_actions(_game);
-      console.debug("allowed_actions", allowed_actions);
-      setAllowedActions(allowed_actions);
+    while (![GameState.PlayerTurn, GameState.GameOver].includes(game.state)) {
+      await sleep(200);
+      game = nextState(game);
     }
   };
 
-  const handlePlayerAction = (action: PlayerAction) => {
+  const nextState = (game: BlackjackState, action?: PlayerAction): BlackjackState => {
     const _game = Blackjack.next_state(game!, action);
-    console.debug("_game", _game);
     setGame(_game);
+    if (_game.state === GameState.PlayerTurn) {
+      const allowed_actions = Blackjack.allowed_actions(_game);
+      setAllowedActions(allowed_actions);
+    }
+    return _game;
+  };
+
+  const handlePlayerAction = async (action: PlayerAction) => {
+    let _game = Blackjack.next_state(game!, action);
+    setGame(_game);
+    while (![GameState.PlayerTurn, GameState.GameOver].includes(_game.state)) {
+      await sleep(200);
+      _game = nextState(_game);
+    }
   };
 
   const monteCarlo = () => {
@@ -106,44 +88,81 @@ function Game({ Blackjack }: { Blackjack: BlackjackJsBindings }) {
     console.timeEnd(iterations.toLocaleString());
   };
 
-  return (
-    <div className="flex flex-col gap-2">
-      <button onClick={monteCarlo}>stress test</button>
-      {!game && (
-        <button
-          className="rounded transition-colors bg-slate-700 hover:bg-slate-600 px-4 py-2"
-          onClick={init}
-        >
-          init
-        </button>
-      )}
-      {game && game.state !== GameState.PlayerTurn ? (
-        <button
-          className="rounded transition-colors bg-slate-700 hover:bg-slate-600 px-4 py-2"
-          onClick={nextState}
-        >
-          Next state
-        </button>
-      ) : (
-        Object.values([
-          PlayerAction.Hit,
-          PlayerAction.Stand,
-          PlayerAction.DoubleDown,
-          PlayerAction.Split,
-          PlayerAction.Surrender,
-        ]).map(
-          (action, i) =>
-            allowedActions.includes(action as PlayerAction) && (
-              <button
-                className="rounded transition-colors bg-slate-700 hover:bg-slate-600 px-4 py-2"
-                key={i}
-                onClick={() => handlePlayerAction(action as PlayerAction)}
-              >
-                {action}
-              </button>
-            )
-        )
-      )}
-    </div>
-  );
+  if (!game) {
+    return (
+      <>
+        <Button onClick={startGame}>Start game</Button>
+      </>
+    );
+  } else if (game !== undefined) {
+    return (
+      <main className='flex flex-col items-center justify-between h-full max-h-[860px] py-20'>
+        <div className='flex gap-2'>
+          {/* dealer hand */}
+          {game.dealer_hand.map((card, i) => (
+            <Card key={i} card={card} />
+          ))}
+        </div>
+
+        <div className='flex flex-col gap-4 text-center min-w-48'>
+          {game.state === GameState.GameOver &&
+            (() => {
+              const handOutcomes = Blackjack.game_outcome(game);
+              const handOutcomeString = (handOutcome: HandOutcome) =>
+                match(handOutcome)
+                  .with({ kind: 'Won', reason: WinReason.Blackjack }, () => 'Blackjack! You won!')
+                  .with({ kind: 'Won', reason: WinReason.DealerBust }, () => 'Dealer bust! You won!')
+                  .with({ kind: 'Won', reason: WinReason.HigherHand }, () => 'You won!')
+                  .with({ kind: 'Lost', reason: LossReason.Bust }, () => 'Bust.')
+                  .with({ kind: 'Lost', reason: LossReason.DealerBlackjack }, () => 'Dealer got blackjack.')
+                  .with({ kind: 'Lost', reason: LossReason.LowerHand }, () => 'You lost.')
+                  .with({ kind: 'Push' }, () => 'Push.')
+                  .with({ kind: 'Surrendered' }, () => 'Surrender.')
+                  .exhaustive();
+              if (handOutcomes.length === 1) {
+                const handOutcome = handOutcomes[0];
+                return handOutcomeString(handOutcome);
+              } else if (handOutcomes.length >= 2) {
+                return 'idk what to show here for multiple hands';
+              }
+            })()}
+          {game.state === GameState.GameOver && <Button onClick={() => startGame()}>Play again</Button>}
+        </div>
+        <div className='flex flex-col items-center gap-7'>
+          {/* player hands */}
+          <div className='flex gap-28'>
+            {game.player_hands.map((hand, i) => (
+              <div className='flex gap-2' key={i}>
+                {hand.map((card, i) => (
+                  <Card key={i} card={card} />
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className='grid grid-cols-5 gap-1'>
+            {[
+              PlayerAction.DoubleDown,
+              PlayerAction.Hit,
+              PlayerAction.Stand,
+              PlayerAction.Split,
+              PlayerAction.Surrender,
+            ].map((action, i) => {
+              const isPlayerTurn = game.state === GameState.PlayerTurn;
+              const props: ButtonProps = match(action)
+                .with(PlayerAction.DoubleDown, () => ({ children: 'Double' }))
+                .with(PlayerAction.Hit, () => ({ children: 'Hit' }))
+                .with(PlayerAction.Stand, () => ({ children: 'Stand' }))
+                .with(PlayerAction.Split, () => ({ children: 'Split' }))
+                .with(PlayerAction.Surrender, () => ({ children: 'Surrender' }))
+                .exhaustive();
+              props.disabled = !isPlayerTurn || !allowedActions.includes(action);
+              props.className = cn('h-24', props.disabled && 'opacity-50');
+              props.onClick = () => handlePlayerAction(action);
+              return <Button key={i} {...props}></Button>;
+            })}
+          </div>
+        </div>
+      </main>
+    );
+  }
 }

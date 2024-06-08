@@ -256,12 +256,19 @@ export function allowed_actions(game) {
 }
 
 /**
-* @param {number} duration_ms
-* @returns {number}
+* @param {any} game
+* @returns {any}
 */
-export function monte_carlo(duration_ms) {
-    const ret = wasm.monte_carlo(duration_ms);
-    return ret >>> 0;
+export function game_outcome(game) {
+    const ret = wasm.game_outcome(addHeapObject(game));
+    return takeObject(ret);
+}
+
+/**
+* @param {number} iterations
+*/
+export function monte_carlo(iterations) {
+    wasm.monte_carlo(iterations);
 }
 
 function handleError(f, args) {
