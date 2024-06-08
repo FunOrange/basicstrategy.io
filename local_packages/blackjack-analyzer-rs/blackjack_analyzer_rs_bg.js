@@ -207,26 +207,6 @@ function debugString(val) {
     return className;
 }
 /**
-* @param {boolean} surrender
-* @param {boolean} dealer_stands_on_all_17
-* @param {boolean} dealer_peeks
-* @param {any} split_aces
-* @param {boolean} hit_on_split_ace
-* @param {any} max_hands_after_split
-* @param {any} double_down_on
-* @param {boolean} double_after_split
-* @param {boolean} double_on_split_ace
-* @param {number} blackjack_payout
-* @param {boolean} ace_and_ten_counts_as_blackjack
-* @param {boolean} split_ace_can_be_blackjack
-* @returns {any}
-*/
-export function create_ruleset(surrender, dealer_stands_on_all_17, dealer_peeks, split_aces, hit_on_split_ace, max_hands_after_split, double_down_on, double_after_split, double_on_split_ace, blackjack_payout, ace_and_ten_counts_as_blackjack, split_ace_can_be_blackjack) {
-    const ret = wasm.create_ruleset(surrender, dealer_stands_on_all_17, dealer_peeks, addHeapObject(split_aces), hit_on_split_ace, addHeapObject(max_hands_after_split), addHeapObject(double_down_on), double_after_split, double_on_split_ace, blackjack_payout, ace_and_ten_counts_as_blackjack, split_ace_can_be_blackjack);
-    return takeObject(ret);
-}
-
-/**
 * @param {number} starting_bet
 * @param {any} rules
 * @returns {any}
