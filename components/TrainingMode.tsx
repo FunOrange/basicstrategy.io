@@ -1,5 +1,6 @@
 'use client';
 import Card from '@/components/Card';
+import FadeOut from '@/components/abstract/FadeOut';
 import { rules } from '@/constants/blackjack-rules';
 import useGameAudio from '@/hooks/useGameAudio';
 import {
@@ -26,6 +27,18 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
   const [game, setGame] = useState<BlackjackState>();
   const [allowedActions, setAllowedActions] = useState<PlayerAction[]>([]);
 
+  // #region player feedback
+  const [lastDecision, setLastDecision] = useState<{ correct: boolean; correctMove: PlayerAction } | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setLastDecision(undefined);
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [lastDecision]);
+  // #endregion player feedback
+
   const init = () => {
     const bet = 1;
     let game = Blackjack.init_state(bet, rules);
@@ -47,6 +60,7 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
     } else {
       play.incorrect();
     }
+    setLastDecision({ correct: actionIsCorrect, correctMove: correctAction });
     let _game = Blackjack.next_state(game!, action);
     runUntilPlayerTurn(_game);
   };
@@ -69,7 +83,7 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
 
   if (game !== undefined) {
     return (
-      <main className='flex flex-col items-center justify-between h-full max-h-[860px] py-20'>
+      <main className='flex flex-col items-center justify-between h-full max-h-[860px] py-16'>
         {/* top */}
         <div className='flex flex-col gap-6 items-center'>
           <div className='flex gap-2 min-h-[156px]'>
@@ -170,7 +184,7 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
               </div>
             );
           })()}
-          <div className='flex min-h-[156px] gap-x-52'>
+          <div className='flex min-h-[156px] gap-x-60'>
             {game.player_hands.map((hand, i) => (
               <div className={cn('flex ml-[-70px]', i !== game.hand_index && 'opacity-40')} key={i}>
                 {hand.map((card, j) => {
@@ -185,7 +199,21 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
             ))}
           </div>
 
-          {/* <div className='text-red-500'>Incorrect. You should have hit.</div> */}
+          <div className='min-h-6'>
+            <FadeOut isVisible={lastDecision !== undefined}>
+              <div className={lastDecision?.correct ? 'text-green-500' : 'text-red-500'}>
+                {lastDecision?.correct
+                  ? 'Correct!'
+                  : `Incorrect. You should have ${match(lastDecision?.correctMove)
+                      .with(PlayerAction.DoubleDown, () => 'doubled down')
+                      .with(PlayerAction.Hit, () => 'hit')
+                      .with(PlayerAction.Stand, () => 'stood')
+                      .with(PlayerAction.Split, () => 'split')
+                      .with(PlayerAction.Surrender, () => 'surrendered')
+                      .otherwise(() => '')}.`}
+              </div>
+            </FadeOut>
+          </div>
 
           <div className='flex flex-col gap-4'>
             <div className='relative'>
