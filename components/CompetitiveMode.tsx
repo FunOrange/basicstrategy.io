@@ -32,7 +32,7 @@ interface Decision {
   correctMove: PlayerAction;
 }
 
-export function CompetitiveMode({ Blackjack }: { Blackjack: Blackjack }) {
+export function CompetitiveMode({ Blackjack, back }: { Blackjack: Blackjack; back: () => void }) {
   const [game, setGame] = useState<BlackjackState>();
   const [allowedActions, setAllowedActions] = useState<PlayerAction[]>([]);
 
@@ -210,27 +210,33 @@ export function CompetitiveMode({ Blackjack }: { Blackjack: Blackjack }) {
               </div>
             </div>
 
-            <div className='grid grid-cols-5 gap-1'>
-              {[
-                PlayerAction.DoubleDown,
-                PlayerAction.Hit,
-                PlayerAction.Stand,
-                PlayerAction.Split,
-                PlayerAction.Surrender,
-              ].map((action, i) => {
-                const isPlayerTurn = game.state === GameState.PlayerTurn;
-                const props: ButtonProps = {
-                  children: playerActionToString(action),
-                };
-                props.disabled = !isPlayerTurn || !allowedActions.includes(action);
-                props.className = cn('h-24', props.disabled && 'opacity-50');
-                props.onClick = () => handlePlayerAction(action);
-                return <Button key={i} {...props} />;
-              })}
+            <div className='flex flex-col gap-4'>
+              <div className='grid grid-cols-5 gap-1'>
+                {[
+                  PlayerAction.DoubleDown,
+                  PlayerAction.Hit,
+                  PlayerAction.Stand,
+                  PlayerAction.Split,
+                  PlayerAction.Surrender,
+                ].map((action, i) => {
+                  const isPlayerTurn = game.state === GameState.PlayerTurn;
+                  const props: ButtonProps = {
+                    children: playerActionToString(action),
+                  };
+                  props.disabled = !isPlayerTurn || !allowedActions.includes(action);
+                  props.className = cn('h-24', props.disabled && 'opacity-50');
+                  props.onClick = () => handlePlayerAction(action);
+                  return <Button key={i} {...props} />;
+                })}
+              </div>
+              <Button onClick={back} type='text'>
+                Quit
+              </Button>
             </div>
           </div>
         </main>
-        <Modal open={gameOver} centered footer={null} onCancel={init} maskClosable={false}>
+
+        <Modal open={gameOver} centered footer={null} onCancel={back} maskClosable={false}>
           {(() => {
             const { score, correctDecisions, incorrectDecisions, rawScore } = calculateScore(decisions);
             const highscore = Number(localStorage.getItem('highscore')) || 0;
