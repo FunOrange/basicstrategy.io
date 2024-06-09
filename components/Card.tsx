@@ -4,8 +4,9 @@ import { match } from 'ts-pattern';
 
 export interface CardProps {
   card: Card;
+  sideways?: boolean;
 }
-export default function Card({ card }: CardProps) {
+export default function Card({ card, sideways }: CardProps) {
   if (card.face_down) {
     return (
       <div
@@ -60,6 +61,7 @@ export default function Card({ card }: CardProps) {
         'p-2 border rounded shadow w-[114px] h-[156px] bg-gray-50',
         'grid grid-cols-[10px_1fr_10px] gap-x-2',
         color,
+        sideways && 'rotate-90 origin-center ml-5 mt-[-40px]',
       )}
     >
       <div className='flex flex-col items-center'>

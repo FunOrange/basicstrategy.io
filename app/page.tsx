@@ -36,7 +36,9 @@ export default function Home() {
       {Boolean(Blackjack) && gameMode === GameMode.Competitive && (
         <CompetitiveMode Blackjack={Blackjack!} back={() => setGameMode(undefined)} />
       )}
-      {Boolean(Blackjack) && gameMode === GameMode.Training && <TrainingMode Blackjack={Blackjack!} />}
+      {Boolean(Blackjack) && gameMode === GameMode.Training && (
+        <TrainingMode Blackjack={Blackjack!} back={() => setGameMode(undefined)} />
+      )}
     </main>
   );
 }

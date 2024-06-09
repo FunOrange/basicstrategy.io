@@ -2,6 +2,7 @@
 import Card from '@/components/Card';
 import Countdown from '@/components/Countdown';
 import { rules } from '@/constants/blackjack-rules';
+import useGameAudio from '@/hooks/useGameAudio';
 import {
   GameState,
   PlayerAction,
@@ -24,6 +25,7 @@ import { useEffect, useRef, useState } from 'react';
 import { isMatching, match } from 'ts-pattern';
 
 const GAME_DURATION_SECONDS = 60;
+const GAME_TICK_MS = 220;
 
 interface Decision {
   dealerHand: HandValue;
@@ -32,7 +34,12 @@ interface Decision {
   correctMove: PlayerAction;
 }
 
-export function CompetitiveMode({ Blackjack, back }: { Blackjack: Blackjack; back: () => void }) {
+export interface CompetitiveModeProps {
+  Blackjack: Blackjack;
+  back: () => void;
+}
+export function CompetitiveMode({ Blackjack, back }: CompetitiveModeProps) {
+  const play = useGameAudio();
   const [game, setGame] = useState<BlackjackState>();
   const [allowedActions, setAllowedActions] = useState<PlayerAction[]>([]);
 
@@ -75,8 +82,8 @@ export function CompetitiveMode({ Blackjack, back }: { Blackjack: Blackjack; bac
   const [highscoreBeatBy, setHighscoreBeatBy] = useState(0);
 
   useEffect(() => {
-    const timeout = init();
-    return () => clearTimeout(timeout);
+    const gameOverTimeout = init();
+    return () => clearTimeout(gameOverTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -88,9 +95,6 @@ export function CompetitiveMode({ Blackjack, back }: { Blackjack: Blackjack; bac
       const oldHighscore = Number(localStorage.getItem('highscore')) || 0;
       const { score } = calculateScore(decisionsRef.current);
       if (score > Number(oldHighscore)) {
-        console.debug('oldHighscore', oldHighscore);
-        console.debug('score', score);
-        console.debug('highscoreBeatBy', score - Number(oldHighscore));
         localStorage.setItem('highscore', String(score));
         setHighscoreBeatBy(score - Number(oldHighscore));
       } else {
@@ -112,8 +116,16 @@ export function CompetitiveMode({ Blackjack, back }: { Blackjack: Blackjack; bac
   };
 
   const handlePlayerAction = async (action: PlayerAction) => {
+    if (action === PlayerAction.Hit) {
+      play.dealCard();
+    }
     const correctAction = Blackjack.get_optimal_move(game!);
     const actionIsCorrect = action === correctAction;
+    if (actionIsCorrect) {
+      play.correct();
+    } else {
+      play.incorrect();
+    }
     setLastDecision({ correct: actionIsCorrect, correctMove: correctAction });
     setDecisions(
       append({
@@ -134,7 +146,10 @@ export function CompetitiveMode({ Blackjack, back }: { Blackjack: Blackjack; bac
   const runUntilPlayerTurn = async (game: BlackjackState) => {
     setGame(game);
     while (![GameState.PlayerTurn, GameState.GameOver].includes(game.state)) {
-      await sleep(80);
+      await sleep(GAME_TICK_MS);
+      if (game.state === GameState.Dealing || game.state === GameState.DealerTurn) {
+        play.dealCard();
+      }
       game = Blackjack.next_state(game!);
       setGame(game);
     }
@@ -173,12 +188,17 @@ export function CompetitiveMode({ Blackjack, back }: { Blackjack: Blackjack; bac
 
           {/* bottom */}
           <div className='flex flex-col items-center gap-4'>
-            <div className='flex gap-28 min-h-[156px]'>
+            <div className='flex gap-28 min-h-[156px] gap-x-52'>
               {game.player_hands.map((hand, i) => (
-                <div className={cn('flex gap-2', i !== game.hand_index && 'opacity-40')} key={i}>
-                  {hand.map((card, i) => (
-                    <Card key={i} card={card} />
-                  ))}
+                <div className={cn('flex ml-[-70px]', i !== game.hand_index && 'opacity-40')} key={i}>
+                  {hand.map((card, j) => {
+                    const sideways = game.bets[i] > game.starting_bet && j === hand.length - 1;
+                    return (
+                      <div key={j} className='w-7 overflow-visible' style={{ zIndex: i }}>
+                        <Card card={card} sideways={sideways} />
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>
@@ -240,7 +260,6 @@ export function CompetitiveMode({ Blackjack, back }: { Blackjack: Blackjack; bac
           {(() => {
             const { score, correctDecisions, incorrectDecisions, rawScore } = calculateScore(decisions);
             const highscore = Number(localStorage.getItem('highscore')) || 0;
-            console.debug('Modal > highscoreBeatBy', highscoreBeatBy);
             return (
               <div className='flex flex-col items-center gap-4'>
                 <div className='flex flex-col items-center'>
