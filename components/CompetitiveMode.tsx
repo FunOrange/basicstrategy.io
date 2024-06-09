@@ -20,7 +20,7 @@ import { cn } from '@/utils/css';
 import { sleep } from '@/utils/time';
 import { Button, ButtonProps, Modal } from 'antd';
 import { append, clamp } from 'ramda';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isMatching, match } from 'ts-pattern';
 
 const GAME_DURATION_SECONDS = 60;
@@ -65,11 +65,18 @@ export function CompetitiveMode({ Blackjack }: { Blackjack: Blackjack }) {
   // #region score keeping
   const [startTimeMs, setStartTimeMs] = useState<number>(0);
   const [decisions, setDecisions] = useState<Decision[]>([]);
+  const decisionsRef = useRef<Decision[]>([]);
+  useEffect(() => {
+    decisionsRef.current = decisions;
+  }, [decisions]);
   const [gameOver, setGameOver] = useState(false);
   // #endregion score keeping
 
+  const [highscoreBeatBy, setHighscoreBeatBy] = useState(0);
+
   useEffect(() => {
-    init();
+    const timeout = init();
+    return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -77,10 +84,22 @@ export function CompetitiveMode({ Blackjack }: { Blackjack: Blackjack }) {
     setStartTimeMs(Date.now());
     setDecisions([]);
     setGameOver(false);
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
+      const oldHighscore = Number(localStorage.getItem('highscore')) || 0;
+      const { score } = calculateScore(decisionsRef.current);
+      if (score > Number(oldHighscore)) {
+        console.debug('oldHighscore', oldHighscore);
+        console.debug('score', score);
+        console.debug('highscoreBeatBy', score - Number(oldHighscore));
+        localStorage.setItem('highscore', String(score));
+        setHighscoreBeatBy(score - Number(oldHighscore));
+      } else {
+        setHighscoreBeatBy(0);
+      }
       setGameOver(true);
     }, GAME_DURATION_SECONDS * 1000);
     initRound();
+    return timeout;
   };
   const initRound = () => {
     const bet = 1;
@@ -213,20 +232,21 @@ export function CompetitiveMode({ Blackjack }: { Blackjack: Blackjack }) {
         </main>
         <Modal open={gameOver} centered footer={null} onCancel={init} maskClosable={false}>
           {(() => {
-            const correctDecisions = decisions.filter((d) => d.playerMove === d.correctMove).length;
-            const incorrectDecisions = decisions.filter((d) => d.playerMove !== d.correctMove).length;
-            const decisionsPerSecond = correctDecisions / GAME_DURATION_SECONDS || 0;
-            const rawScore = decisionsPerSecond * 1000;
-            // 0% incorrect: player keeps 100% his score
-            // 50% incorrect: player keeps 0% of his score
-            const incorrectRatio = incorrectDecisions / (correctDecisions + incorrectDecisions);
-            const incorrectDecisionsPenalty = clamp(0, 1, 1 - incorrectRatio / 0.5);
-            const score = rawScore * incorrectDecisionsPenalty;
+            const { score, correctDecisions, incorrectDecisions, rawScore } = calculateScore(decisions);
+            const highscore = Number(localStorage.getItem('highscore')) || 0;
+            console.debug('Modal > highscoreBeatBy', highscoreBeatBy);
             return (
               <div className='flex flex-col items-center gap-4'>
-                <div className='flex flex-col justify-center'>
-                  <h2 className='text-2xl font-bold text-center'>Your score:</h2>
-                  <div className='text-4xl font-bold text-center mb-4'>{Math.round(score)}</div>
+                <div className='flex flex-col items-center'>
+                  <h2 className='text-2xl font-bold text-center'>
+                    {highscoreBeatBy > 0 ? 'New highscore!' : 'Your score:'}
+                  </h2>
+                  <div className='text-4xl font-bold text-center mb-1'>{Math.round(score)}</div>
+                  <div className='text-center mb-4'>
+                    {highscoreBeatBy > 0
+                      ? `Your old highscore was ${Math.round(score - highscoreBeatBy)}.`
+                      : `Your highscore is ${Math.round(highscore)}`}
+                  </div>
                   <div className='grid grid-cols-[auto_auto] gap-x-4'>
                     <div className='text-lg text-right'>Correct decisions:</div>
                     <div className='text-lg font-medium'>{correctDecisions}</div>
@@ -251,4 +271,16 @@ export function CompetitiveMode({ Blackjack }: { Blackjack: Blackjack }) {
       </>
     );
   }
+}
+function calculateScore(decisions: Decision[]) {
+  const correctDecisions = decisions.filter((d) => d.playerMove === d.correctMove).length;
+  const incorrectDecisions = decisions.filter((d) => d.playerMove !== d.correctMove).length;
+  const decisionsPerSecond = correctDecisions / GAME_DURATION_SECONDS || 0;
+  const rawScore = decisionsPerSecond * 1000;
+  // 0% incorrect: player keeps 100% his score
+  // 50% incorrect: player keeps 0% of his score
+  const incorrectRatio = incorrectDecisions / (correctDecisions + incorrectDecisions);
+  const incorrectDecisionsPenalty = clamp(0, 1, 1 - incorrectRatio / 0.5);
+  const score = rawScore * incorrectDecisionsPenalty || 0;
+  return { score, correctDecisions, incorrectDecisions, rawScore };
 }
