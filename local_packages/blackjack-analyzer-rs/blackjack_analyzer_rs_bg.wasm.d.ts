@@ -3,9 +3,8 @@
 export const memory: WebAssembly.Memory;
 export function init_state(a: number, b: number): number;
 export function next_state(a: number, b: number): number;
-export function allowed_actions(a: number): number;
+export function get_allowed_actions(a: number): number;
 export function get_optimal_move(a: number): number;
-export function game_outcome(a: number): number;
 export function get_player_hand_value(a: number): number;
 export function get_dealer_hand_value(a: number): number;
 export function get_game_outcome(a: number): number;

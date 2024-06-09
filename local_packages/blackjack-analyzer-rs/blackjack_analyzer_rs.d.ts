@@ -16,17 +16,12 @@ export function next_state(game: any, action: any): any;
 * @param {any} game
 * @returns {any}
 */
-export function allowed_actions(game: any): any;
+export function get_allowed_actions(game: any): any;
 /**
 * @param {any} game
 * @returns {any}
 */
 export function get_optimal_move(game: any): any;
-/**
-* @param {any} game
-* @returns {any}
-*/
-export function game_outcome(game: any): any;
 /**
 * @param {any} game
 * @returns {any}

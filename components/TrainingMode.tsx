@@ -1,6 +1,6 @@
 'use client';
 import Card from '@/components/Card';
-import { rules } from '@/constants/blackjack-constants';
+import { rules } from '@/constants/blackjack-rules';
 import {
   GameState,
   PlayerAction,
@@ -41,7 +41,7 @@ export function TrainingMode({ Blackjack }: { Blackjack: Blackjack }) {
       setGame(game);
     }
     if (game.state === GameState.PlayerTurn) {
-      setAllowedActions(Blackjack.allowed_actions(game));
+      setAllowedActions(Blackjack.get_allowed_actions(game));
     }
   };
 
@@ -59,7 +59,7 @@ export function TrainingMode({ Blackjack }: { Blackjack: Blackjack }) {
         <div className='flex flex-col gap-4 text-center min-w-48'>
           {game.state === GameState.GameOver &&
             (() => {
-              const handOutcomes = Blackjack.game_outcome(game);
+              const handOutcomes = Blackjack.get_game_outcome(game);
               if (handOutcomes.length === 1) {
                 const handOutcome = handOutcomes[0];
                 return handOutcomeToString(handOutcome);

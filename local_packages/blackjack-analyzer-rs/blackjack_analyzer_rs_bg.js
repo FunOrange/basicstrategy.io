@@ -230,8 +230,8 @@ export function next_state(game, action) {
 * @param {any} game
 * @returns {any}
 */
-export function allowed_actions(game) {
-    const ret = wasm.allowed_actions(addHeapObject(game));
+export function get_allowed_actions(game) {
+    const ret = wasm.get_allowed_actions(addHeapObject(game));
     return takeObject(ret);
 }
 
@@ -241,15 +241,6 @@ export function allowed_actions(game) {
 */
 export function get_optimal_move(game) {
     const ret = wasm.get_optimal_move(addHeapObject(game));
-    return takeObject(ret);
-}
-
-/**
-* @param {any} game
-* @returns {any}
-*/
-export function game_outcome(game) {
-    const ret = wasm.game_outcome(addHeapObject(game));
     return takeObject(ret);
 }
 

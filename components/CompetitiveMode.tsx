@@ -1,7 +1,7 @@
 'use client';
 import Card from '@/components/Card';
 import Countdown from '@/components/Countdown';
-import { rules } from '@/constants/blackjack-constants';
+import { rules } from '@/constants/blackjack-rules';
 import {
   GameState,
   PlayerAction,
@@ -139,7 +139,7 @@ export function CompetitiveMode({ Blackjack, back }: { Blackjack: Blackjack; bac
       setGame(game);
     }
     if (game.state === GameState.PlayerTurn) {
-      setAllowedActions(Blackjack.allowed_actions(game));
+      setAllowedActions(Blackjack.get_allowed_actions(game));
     } else if (game.state === GameState.GameOver) {
       setLastGameOutcome(Blackjack.get_game_outcome(game));
       initRound();
