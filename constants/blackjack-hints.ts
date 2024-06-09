@@ -123,7 +123,7 @@ export const getHint = (Blackjack: BlackjackJsBindings, game: BlackjackState): H
 };
 export const getHintDetails = (
   hint: Hint | undefined,
-): { dealerTooltip: string; playerTooltip: string; hint: string } => {
+): { dealerTooltip: string; playerTooltip: string; hint: string } | undefined => {
   return match(hint)
     .with(Hint.Hard8Hit, () => ({
       dealerTooltip: '',
