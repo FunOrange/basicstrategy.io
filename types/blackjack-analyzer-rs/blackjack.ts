@@ -52,7 +52,7 @@ export enum PlayerAction {
   Surrender = 'Surrender',
 }
 
-export type HandValue = { kind: 'hard'; value: number } | { kind: 'soft'; value: number } | { kind: 'blackjack' };
+export type HandValue = { kind: 'Hard'; value: number } | { kind: 'Soft'; value: number } | { kind: 'Blackjack' };
 
 export enum WinReason {
   DealerBust = 'DealerBust',

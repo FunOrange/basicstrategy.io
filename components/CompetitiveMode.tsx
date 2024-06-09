@@ -188,7 +188,7 @@ export function CompetitiveMode({ Blackjack, back }: CompetitiveModeProps) {
 
           {/* bottom */}
           <div className='flex flex-col items-center gap-4'>
-            <div className='flex gap-28 min-h-[156px] gap-x-52'>
+            <div className='flex min-h-[156px] gap-x-52'>
               {game.player_hands.map((hand, i) => (
                 <div className={cn('flex ml-[-70px]', i !== game.hand_index && 'opacity-40')} key={i}>
                   {hand.map((card, j) => {

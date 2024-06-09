@@ -11,8 +11,9 @@ import {
 import { handOutcomeToString, playerActionToString } from '@/utils/blackjack-utils';
 import { cn } from '@/utils/css';
 import { sleep } from '@/utils/time';
-import { Button, ButtonProps } from 'antd';
+import { Button, ButtonProps, Tag, TagProps } from 'antd';
 import { useEffect, useState } from 'react';
+import { Pattern, isMatching, match } from 'ts-pattern';
 
 const GAME_TICK_MS = 260;
 
@@ -70,14 +71,50 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
     return (
       <main className='flex flex-col items-center justify-between h-full max-h-[860px] py-20'>
         {/* top */}
-        <div className='flex gap-2'>
-          {game.dealer_hand.map((card, i) => (
-            <Card key={i} card={card} />
-          ))}
+        <div className='flex flex-col gap-6 items-center'>
+          <div className='flex gap-2 min-h-[156px]'>
+            {game.dealer_hand.map((card, i) => (
+              <Card key={i} card={card} />
+            ))}
+          </div>
+
+          {(() => {
+            const dealerHandValue = Blackjack.get_dealer_hand_value(game);
+            const color: TagProps['color'] = match(dealerHandValue)
+              .with({ kind: 'Hard' }, (hand) =>
+                hand.value === 2
+                  ? 'blue'
+                  : hand.value === 3
+                  ? 'cyan'
+                  : hand.value === 4
+                  ? 'lime'
+                  : [5, 6].includes(hand.value)
+                  ? 'green'
+                  : [7, 8, 9].includes(hand.value)
+                  ? undefined
+                  : hand.value === 10
+                  ? 'red'
+                  : undefined,
+              )
+              .with({ kind: 'Soft', value: 11 }, () => 'magenta')
+              .with({ kind: 'Blackjack' }, () => 'warning')
+              .otherwise(() => 'gray');
+            return (
+              <div>
+                <Tag color={color}>
+                  {match(dealerHandValue)
+                    .with({ kind: 'Hard' }, (hand) => hand.value)
+                    .with({ kind: 'Soft' }, (hand) => hand.value)
+                    .with({ kind: 'Blackjack' }, () => 'Blackjack')
+                    .otherwise(() => undefined)}
+                </Tag>
+              </div>
+            );
+          })()}
         </div>
 
         {/* middle */}
-        <div className='text-center'>
+        <div className='text-center text-gray-500'>
           {game.state === GameState.GameOver &&
             (() => {
               const handOutcomes = Blackjack.get_game_outcome(game);
@@ -85,14 +122,55 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
                 const handOutcome = handOutcomes[0];
                 return handOutcomeToString(handOutcome);
               } else if (handOutcomes.length >= 2) {
-                return 'idk what to show here for multiple hands';
+                if (handOutcomes.every(isMatching({ kind: 'Surrendered' }))) {
+                  return 'Surrendered.';
+                } else {
+                  return handOutcomes.map((handOutcome, i) =>
+                    match(handOutcome)
+                      .with({ kind: 'Won', reason: Pattern.any }, () => `Hand ${i + 1} won!`)
+                      .with({ kind: 'Lost', reason: Pattern.any }, () => `Hand ${i + 1} lost.`)
+                      .with({ kind: 'Push' }, () => `Hand ${i + 1} push.`)
+                      .with({ kind: 'Surrendered' }, () => 'Surrender.')
+                      .exhaustive(),
+                  );
+                }
               }
             })()}
         </div>
 
         {/* bottom */}
-        <div className='flex flex-col items-center gap-7'>
-          <div className='flex gap-28'>
+        <div className='flex flex-col items-center gap-4'>
+          {(() => {
+            const playerHandValue = Blackjack.get_player_hand_value(game);
+            const color: TagProps['color'] = match(playerHandValue)
+              .with({ kind: 'Hard' }, (hand) =>
+                hand.value <= 2
+                  ? undefined
+                  : [9, 10, 11].includes(hand.value)
+                  ? 'green'
+                  : [12, 13, 14, 15, 16].includes(hand.value)
+                  ? 'yellow'
+                  : hand.value >= 17
+                  ? 'red'
+                  : undefined,
+              )
+              .with({ kind: 'Soft', value: 19 }, () => 'red')
+              .with({ kind: 'Soft', value: 20 }, () => 'red')
+              .with({ kind: 'Blackjack' }, () => 'warning')
+              .otherwise(() => 'gray');
+            return (
+              <div>
+                <Tag color={color}>
+                  {match(playerHandValue)
+                    .with({ kind: 'Hard' }, (hand) => hand.value)
+                    .with({ kind: 'Soft' }, (hand) => `${hand.value - 10}/${hand.value}`)
+                    .with({ kind: 'Blackjack' }, () => 'Blackjack')
+                    .otherwise(() => undefined)}
+                </Tag>
+              </div>
+            );
+          })()}
+          <div className='flex min-h-[156px] gap-x-52'>
             {game.player_hands.map((hand, i) => (
               <div className={cn('flex ml-[-70px]', i !== game.hand_index && 'opacity-40')} key={i}>
                 {hand.map((card, j) => {
@@ -106,6 +184,9 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
               </div>
             ))}
           </div>
+
+          {/* <div className='text-red-500'>Incorrect. You should have hit.</div> */}
+
           <div className='flex flex-col gap-4'>
             <div className='relative'>
               {game.state === GameState.GameOver && (
