@@ -164,7 +164,7 @@ export function CompetitiveMode({ Blackjack, back }: CompetitiveModeProps) {
   if (game !== undefined) {
     return (
       <>
-        <main className='flex flex-col items-center justify-between h-full max-h-[760px] py-20'>
+        <div className='flex flex-col items-center justify-between h-full max-h-[760px] py-20'>
           {/* top */}
           <div className='flex gap-2 min-h-[156px]'>
             {game.dealer_hand.map((card, i) => (
@@ -254,7 +254,7 @@ export function CompetitiveMode({ Blackjack, back }: CompetitiveModeProps) {
               </Button>
             </div>
           </div>
-        </main>
+        </div>
 
         <Modal open={gameOver} centered footer={null} onCancel={back} maskClosable={false}>
           {(() => {
