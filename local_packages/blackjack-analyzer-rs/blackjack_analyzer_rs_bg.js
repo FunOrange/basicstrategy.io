@@ -239,16 +239,53 @@ export function allowed_actions(game) {
 * @param {any} game
 * @returns {any}
 */
+export function get_optimal_move(game) {
+    const ret = wasm.get_optimal_move(addHeapObject(game));
+    return takeObject(ret);
+}
+
+/**
+* @param {any} game
+* @returns {any}
+*/
 export function game_outcome(game) {
     const ret = wasm.game_outcome(addHeapObject(game));
     return takeObject(ret);
 }
 
 /**
+* @param {any} game
+* @returns {any}
+*/
+export function get_player_hand_value(game) {
+    const ret = wasm.get_player_hand_value(addHeapObject(game));
+    return takeObject(ret);
+}
+
+/**
+* @param {any} game
+* @returns {any}
+*/
+export function get_dealer_hand_value(game) {
+    const ret = wasm.get_dealer_hand_value(addHeapObject(game));
+    return takeObject(ret);
+}
+
+/**
+* @param {any} game
+* @returns {any}
+*/
+export function get_game_outcome(game) {
+    const ret = wasm.get_game_outcome(addHeapObject(game));
+    return takeObject(ret);
+}
+
+/**
+* @param {any} rules
 * @param {number} iterations
 */
-export function monte_carlo(iterations) {
-    wasm.monte_carlo(iterations);
+export function monte_carlo(rules, iterations) {
+    wasm.monte_carlo(addHeapObject(rules), iterations);
 }
 
 function handleError(f, args) {

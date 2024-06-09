@@ -1,4 +1,5 @@
 'use client';
+import { CompetitiveMode } from '@/components/CompetitiveMode';
 import { TrainingMode } from '@/components/TrainingMode';
 import { type BlackjackJsBindings as Blackjack } from '@/types/blackjack-analyzer-rs';
 import { Button } from 'antd';
@@ -32,7 +33,7 @@ export default function Home() {
           </Button>
         </div>
       )}
-      {/* {Boolean(Blackjack) && gameMode === GameMode.Competitive && <CompetitiveMode Blackjack={Blackjack!} />} */}
+      {Boolean(Blackjack) && gameMode === GameMode.Competitive && <CompetitiveMode Blackjack={Blackjack!} />}
       {Boolean(Blackjack) && gameMode === GameMode.Training && <TrainingMode Blackjack={Blackjack!} />}
     </main>
   );

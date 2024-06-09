@@ -21,8 +21,29 @@ export function allowed_actions(game: any): any;
 * @param {any} game
 * @returns {any}
 */
+export function get_optimal_move(game: any): any;
+/**
+* @param {any} game
+* @returns {any}
+*/
 export function game_outcome(game: any): any;
 /**
+* @param {any} game
+* @returns {any}
+*/
+export function get_player_hand_value(game: any): any;
+/**
+* @param {any} game
+* @returns {any}
+*/
+export function get_dealer_hand_value(game: any): any;
+/**
+* @param {any} game
+* @returns {any}
+*/
+export function get_game_outcome(game: any): any;
+/**
+* @param {any} rules
 * @param {number} iterations
 */
-export function monte_carlo(iterations: number): void;
+export function monte_carlo(rules: any, iterations: number): void;

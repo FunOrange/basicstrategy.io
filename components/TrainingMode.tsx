@@ -74,7 +74,7 @@ export function TrainingMode({ Blackjack }: { Blackjack: Blackjack }) {
         <div className='flex flex-col items-center gap-7'>
           <div className='flex gap-28'>
             {game.player_hands.map((hand, i) => (
-              <div className='flex gap-2' key={i}>
+              <div className={cn('flex gap-2 min-h-[156px]', i !== game.hand_index && 'opacity-40')} key={i}>
                 {hand.map((card, i) => (
                   <Card key={i} card={card} />
                 ))}

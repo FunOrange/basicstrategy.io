@@ -14,6 +14,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^11.2.10",
     "next": "14.2.3",
+    "ramda": "^0.30.1",
     "react": "^18",
     "react-dom": "^18",
     "tailwind-merge": "^2.3.0",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/ramda": "^0.30.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
