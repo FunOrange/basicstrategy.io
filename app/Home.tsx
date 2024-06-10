@@ -25,7 +25,7 @@ export default function Home() {
     <main className='flex items-center justify-center w-screen h-screen'>
       {gameMode === undefined && (
         <div className='flex flex-col gap-3'>
-          <h1 className='text-4xl font-bold'>blackjack.io</h1>
+          <h1 className='text-4xl font-bold'>basicstrategy.io</h1>
           <p className='max-w-screen-md text-sm'>
             Blackjack has long been a favorite among casino-goers, celebrated for its <b>low house edge (0.5%)</b>.
             Unlike many other casino games, where luck is the predominant factor, Blackjack rewards those who understand
