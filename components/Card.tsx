@@ -1,4 +1,5 @@
 import { type Card, Rank, Suit } from '@/types/blackjack-analyzer-rs';
+import { rankToString } from '@/utils/blackjack-utils';
 import { cn } from '@/utils/css';
 import { match } from 'ts-pattern';
 
@@ -33,21 +34,7 @@ export default function Card({ card, sideways }: CardProps) {
     .with(Suit.Hearts, Suit.Diamonds, () => 'text-red-600')
     .with(Suit.Clubs, Suit.Spades, () => 'text-black')
     .exhaustive();
-  const rankString = match(card.rank)
-    .with(Rank.Two, () => '2')
-    .with(Rank.Three, () => '3')
-    .with(Rank.Four, () => '4')
-    .with(Rank.Five, () => '5')
-    .with(Rank.Six, () => '6')
-    .with(Rank.Seven, () => '7')
-    .with(Rank.Eight, () => '8')
-    .with(Rank.Nine, () => '9')
-    .with(Rank.Ten, () => '10')
-    .with(Rank.Jack, () => 'J')
-    .with(Rank.Queen, () => 'Q')
-    .with(Rank.King, () => 'K')
-    .with(Rank.Ace, () => 'A')
-    .exhaustive();
+  const rankString = rankToString(card.rank);
   const suitString = match(card.suit)
     .with(Suit.Hearts, () => '♥')
     .with(Suit.Diamonds, () => '♦')

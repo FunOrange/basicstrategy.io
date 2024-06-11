@@ -54,3 +54,20 @@ const isBlackjack = (hand: Card[]) =>
     .with([Rank.Ace, Rank.King], () => true)
     .with([Rank.King, Rank.Ace], () => true)
     .otherwise(() => false);
+
+export const rankToString = (rank: Rank, tenAsNumber?: boolean) =>
+  match(rank)
+    .with(Rank.Two, () => '2')
+    .with(Rank.Three, () => '3')
+    .with(Rank.Four, () => '4')
+    .with(Rank.Five, () => '5')
+    .with(Rank.Six, () => '6')
+    .with(Rank.Seven, () => '7')
+    .with(Rank.Eight, () => '8')
+    .with(Rank.Nine, () => '9')
+    .with(Rank.Ten, () => '10')
+    .with(Rank.Jack, () => (tenAsNumber ? 10 : 'J'))
+    .with(Rank.Queen, () => (tenAsNumber ? 10 : 'Q'))
+    .with(Rank.King, () => (tenAsNumber ? 10 : 'K'))
+    .with(Rank.Ace, () => 'A')
+    .exhaustive();

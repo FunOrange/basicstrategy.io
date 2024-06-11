@@ -1,4 +1,5 @@
 'use client';
+import BarGraph from '@/components/BarGraph';
 import Card from '@/components/Card';
 import FadeOut from '@/components/abstract/FadeOut';
 import { getHint, getHintDetails } from '@/constants/blackjack-hints';
@@ -9,12 +10,14 @@ import {
   PlayerAction,
   type BlackjackJsBindings as Blackjack,
   type BlackjackState,
+  Rank,
 } from '@/types/blackjack-analyzer-rs';
-import { handOutcomeToString, playerActionToString } from '@/utils/blackjack-utils';
+import { handOutcomeToString, playerActionToString, rankToString } from '@/utils/blackjack-utils';
 import { cn } from '@/utils/css';
 import { sleep } from '@/utils/time';
 import { Button, ButtonProps, Tag, TagProps, Tooltip } from 'antd';
 import Image from 'next/image';
+import { sum } from 'ramda';
 import { useEffect, useMemo, useState } from 'react';
 import { Pattern, isMatching, match } from 'ts-pattern';
 
@@ -274,7 +277,104 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
                 props.disabled = !isPlayerTurn || !allowedActions.includes(action);
                 props.className = cn('h-24', props.disabled && 'opacity-50');
                 props.onClick = () => handlePlayerAction(action);
-                return <Button key={i} {...props} />;
+                const tooltip = isPlayerTurn
+                  ? match(action)
+                      .with(PlayerAction.DoubleDown, () => 'Double down')
+                      .with(PlayerAction.Hit, () => 'Hit')
+                      .with(PlayerAction.Stand, () => {
+                        const playerHandValue = Blackjack.get_player_hand_value(game);
+                        const playerHandNumber =
+                          match(playerHandValue)
+                            .with({ kind: 'Hard' }, ({ value }) => value)
+                            .with({ kind: 'Soft' }, ({ value }) => value)
+                            .otherwise(() => undefined) ?? 0;
+                        const lessThan17 = playerHandNumber < 17;
+
+                        const iterations = 500_000;
+                        const { results, runtimeMs } = (() => {
+                          if (game.state === GameState.PlayerTurn) {
+                            const startTime = performance.now();
+                            const results = Blackjack.monte_carlo_dealer_only(game.dealer_hand[0], iterations);
+                            const endTime = performance.now();
+                            return { results, runtimeMs: endTime - startTime };
+                          } else {
+                            return { results: new Map(), runtimeMs: 0 };
+                          }
+                        })();
+                        const entries = Array.from(results.entries());
+                        const truncatedEntries = entries.filter(([key]) => key <= 21);
+                        truncatedEntries.push([
+                          'B',
+                          entries.filter(([key]) => key > 21).reduce((acc, [, value]) => acc + value, 0),
+                        ]);
+                        const simulationResults = truncatedEntries
+                          .map(([key, value]) => {
+                            const normalizedY = value / iterations;
+                            return {
+                              x: key,
+                              y: Math.round(normalizedY * 100),
+                              color:
+                                key < playerHandNumber || key === 'B'
+                                  ? ('green' as const)
+                                  : key === playerHandNumber
+                                  ? ('yellow' as const)
+                                  : ('red' as const),
+                            };
+                          })
+                          .sort((a, b) => (a.x === 'B' ? 1 : b.x === 'B' ? -1 : a.x - b.x));
+
+                        const winChance = sum(
+                          simulationResults
+                            .filter(({ x, y }) => x < playerHandNumber || x === 'B')
+                            .map(({ x, y }) => y),
+                        );
+                        const pushChance = sum(
+                          simulationResults.filter(({ x, y }) => x === playerHandNumber).map(({ x, y }) => y),
+                        );
+                        const loseChance = sum(
+                          simulationResults
+                            .filter(({ x, y }) => x > playerHandNumber && x !== 'B')
+                            .map(({ x, y }) => y),
+                        );
+                        const tooltip = (
+                          <div className='flex flex-col items-center gap-1'>
+                            <div>
+                              When the dealer&apos;s upcard is{' '}
+                              <b>{rankToString(game.dealer_hand[0]?.rank ?? Rank.Two, true)}</b>, dealer&apos;s final
+                              hand will be:
+                            </div>
+                            <div className='px-2'>
+                              <BarGraph data={simulationResults} />
+                              <div className='text-xs opacity-50'>
+                                Ran {iterations.toLocaleString()} simulations in {runtimeMs.toFixed(2)} ms
+                              </div>
+                            </div>
+                            {lessThan17 ? (
+                              <div>
+                                Win: <span className='text-green-500'>{winChance}%</span>, Lose:{' '}
+                                <span className='text-red-500'>{loseChance}%</span>
+                              </div>
+                            ) : (
+                              <div>
+                                Win: <span className='text-green-500'>{winChance}%</span>, Push:{' '}
+                                <span className='text-yellow-500'>{pushChance}%</span>, Lose:{' '}
+                                <span className='text-red-500'>{loseChance}%</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                        return tooltip;
+                      })
+                      .otherwise(() => undefined)
+                  : undefined;
+                const showTooltip = !props.disabled && Boolean(tooltip);
+                return showTooltip ? (
+                  <Tooltip key={i} title={tooltip} placement='bottom'>
+                    <Button {...props} />
+                  </Tooltip>
+                ) : (
+                  <Button key={i} {...props} />
+                );
               })}
             </div>
           </div>

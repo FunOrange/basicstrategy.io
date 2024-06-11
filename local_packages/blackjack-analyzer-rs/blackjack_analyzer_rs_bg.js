@@ -279,6 +279,16 @@ export function monte_carlo(rules, iterations) {
     wasm.monte_carlo(addHeapObject(rules), iterations);
 }
 
+/**
+* @param {any} upcard
+* @param {number} iterations
+* @returns {any}
+*/
+export function monte_carlo_dealer_only(upcard, iterations) {
+    const ret = wasm.monte_carlo_dealer_only(addHeapObject(upcard), iterations);
+    return takeObject(ret);
+}
+
 function handleError(f, args) {
     try {
         return f.apply(this, args);
@@ -446,6 +456,11 @@ export function __wbg_newnoargs_e258087cd0daa0ea(arg0, arg1) {
     return addHeapObject(ret);
 };
 
+export function __wbg_new_d9bc3a0147634640() {
+    const ret = new Map();
+    return addHeapObject(ret);
+};
+
 export function __wbg_next_40fc327bfc8770e6(arg0) {
     const ret = getObject(arg0).next;
     return addHeapObject(ret);
@@ -530,6 +545,11 @@ export function __wbg_call_b3ca7c6051f9bec1() { return handleError(function (arg
     const ret = getObject(arg0).call(getObject(arg1), getObject(arg2));
     return addHeapObject(ret);
 }, arguments) };
+
+export function __wbg_set_8417257aaedc936b(arg0, arg1, arg2) {
+    const ret = getObject(arg0).set(getObject(arg1), getObject(arg2));
+    return addHeapObject(ret);
+};
 
 export function __wbg_isSafeInteger_f7b04ef02296c4d2(arg0) {
     const ret = Number.isSafeInteger(getObject(arg0));

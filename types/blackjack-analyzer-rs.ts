@@ -1,5 +1,5 @@
-import { BlackjackState, HandOutcome, HandValue, PlayerAction } from '@/types/blackjack-analyzer-rs/blackjack';
-import { BlackjackRuleset, DoubleDownOn, MaxHandsAfterSplit, SplitAces } from '@/types/blackjack-analyzer-rs/ruleset';
+import { BlackjackState, Card, HandOutcome, HandValue, PlayerAction } from '@/types/blackjack-analyzer-rs/blackjack';
+import { BlackjackRuleset } from '@/types/blackjack-analyzer-rs/ruleset';
 
 export * from '@/types/blackjack-analyzer-rs/blackjack';
 export * from '@/types/blackjack-analyzer-rs/ruleset';
@@ -12,8 +12,9 @@ export class BlackjackJsBindings implements WasmBindgen {
   get_optimal_move: (game: BlackjackState) => PlayerAction = undefined as any;
   get_player_hand_value: (game: BlackjackState) => HandValue = undefined as any;
   get_dealer_hand_value: (game: BlackjackState) => HandValue = undefined as any;
-  monte_carlo: (iterations: number) => void = undefined as any;
   get_game_outcome: (game: BlackjackState) => HandOutcome[] = undefined as any;
+  monte_carlo: (iterations: number) => void = undefined as any;
+  monte_carlo_dealer_only: (card: Card, iterations: number) => Map<number, number> = undefined as any;
 
   constructor() {
     throw new Error('This class meant to be used as a type definition only');
