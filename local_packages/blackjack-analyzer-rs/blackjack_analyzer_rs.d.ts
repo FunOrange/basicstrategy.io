@@ -43,8 +43,11 @@ export function get_game_outcome(game: any): any;
 */
 export function monte_carlo(rules: any, iterations: number): void;
 /**
-* @param {any} upcard
+* @param {number} upcard
 * @param {number} iterations
 * @returns {any}
 */
-export function monte_carlo_dealer_only(upcard: any, iterations: number): any;
+export function monte_carlo_dealer_only(upcard: number, iterations: number): any;
+/**
+*/
+export function install_debugging_hook(): void;

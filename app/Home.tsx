@@ -15,6 +15,7 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       const Blackjack = await import('@/local_packages/blackjack-analyzer-rs');
+      Blackjack.install_debugging_hook();
       setBlackjack(Blackjack as any as Blackjack);
     })();
   }, []);

@@ -280,13 +280,19 @@ export function monte_carlo(rules, iterations) {
 }
 
 /**
-* @param {any} upcard
+* @param {number} upcard
 * @param {number} iterations
 * @returns {any}
 */
 export function monte_carlo_dealer_only(upcard, iterations) {
-    const ret = wasm.monte_carlo_dealer_only(addHeapObject(upcard), iterations);
+    const ret = wasm.monte_carlo_dealer_only(upcard, iterations);
     return takeObject(ret);
+}
+
+/**
+*/
+export function install_debugging_hook() {
+    wasm.install_debugging_hook();
 }
 
 function handleError(f, args) {
@@ -391,6 +397,31 @@ export function __wbg_getwithrefkey_15c62c2b8546208d(arg0, arg1) {
 
 export function __wbg_set_20cbc34131e76824(arg0, arg1, arg2) {
     getObject(arg0)[takeObject(arg1)] = takeObject(arg2);
+};
+
+export function __wbg_new_abda76e883ba8a5f() {
+    const ret = new Error();
+    return addHeapObject(ret);
+};
+
+export function __wbg_stack_658279fe44541cf6(arg0, arg1) {
+    const ret = getObject(arg1).stack;
+    const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    getInt32Memory0()[arg0 / 4 + 1] = len1;
+    getInt32Memory0()[arg0 / 4 + 0] = ptr1;
+};
+
+export function __wbg_error_f851667af71bcfc6(arg0, arg1) {
+    let deferred0_0;
+    let deferred0_1;
+    try {
+        deferred0_0 = arg0;
+        deferred0_1 = arg1;
+        console.error(getStringFromWasm0(arg0, arg1));
+    } finally {
+        wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+    }
 };
 
 export function __wbg_crypto_1d1f22824a6a080c(arg0) {

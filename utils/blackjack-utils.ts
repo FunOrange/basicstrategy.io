@@ -71,3 +71,20 @@ export const rankToString = (rank: Rank, tenAsNumber?: boolean) =>
     .with(Rank.King, () => (tenAsNumber ? 10 : 'K'))
     .with(Rank.Ace, () => 'A')
     .exhaustive();
+
+export const rankToNumber = (rank: Rank) =>
+  match(rank)
+    .with(Rank.Ace, () => 1)
+    .with(Rank.Two, () => 2)
+    .with(Rank.Three, () => 3)
+    .with(Rank.Four, () => 4)
+    .with(Rank.Five, () => 5)
+    .with(Rank.Six, () => 6)
+    .with(Rank.Seven, () => 7)
+    .with(Rank.Eight, () => 8)
+    .with(Rank.Nine, () => 9)
+    .with(Rank.Ten, () => 10)
+    .with(Rank.Jack, () => 10)
+    .with(Rank.Queen, () => 10)
+    .with(Rank.King, () => 10)
+    .exhaustive();

@@ -168,7 +168,7 @@ export const getHintDetails = (
     .with(Hint.Hard12StandAgainst4_5_6, () => ({
       dealerTooltip: 'Dealer is likely to bust.',
       playerTooltip: 'You are likely to bust if you hit.',
-      hint: 'Should stand and pray that the dealer busts.',
+      hint: 'You should stand and hope that the dealer busts.',
     }))
     .with(Hint.Hard12AndUpPlayLikeDealer, () => ({
       dealerTooltip: 'Dealer is not likely to bust.',
@@ -178,7 +178,7 @@ export const getHintDetails = (
     .with(Hint.Hard13AndUpStandAgainstLowCard, () => ({
       dealerTooltip: 'Dealer is likely to bust.',
       playerTooltip: 'You are likely to bust if you hit.',
-      hint: 'Should stand and pray that the dealer busts.',
+      hint: 'You should stand and hope that the dealer busts.',
     }))
     .with(Hint.Hard15Surrender, () => ({
       dealerTooltip: 'Dealer has one of the strongest hands.',
