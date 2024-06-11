@@ -12,7 +12,7 @@ import {
   type BlackjackState,
   Rank,
 } from '@/types/blackjack-analyzer-rs';
-import { handOutcomeToString, playerActionToString, rankToString } from '@/utils/blackjack-utils';
+import { handOutcomeToString, playerActionToString, rankToNumber, rankToString } from '@/utils/blackjack-utils';
 import { cn } from '@/utils/css';
 import { sleep } from '@/utils/time';
 import { Button, ButtonProps, Tag, TagProps, Tooltip } from 'antd';
@@ -294,7 +294,10 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
                         const { results, runtimeMs } = (() => {
                           if (game.state === GameState.PlayerTurn) {
                             const startTime = performance.now();
-                            const results = Blackjack.monte_carlo_dealer_only(game.dealer_hand[0], iterations);
+                            const results = Blackjack.monte_carlo_dealer_only(
+                              rankToNumber(game.dealer_hand[0].rank),
+                              iterations,
+                            );
                             const endTime = performance.now();
                             return { results, runtimeMs: endTime - startTime };
                           } else {
