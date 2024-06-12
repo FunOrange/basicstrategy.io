@@ -284,8 +284,8 @@ export function monte_carlo(rules, iterations) {
 * @param {number} iterations
 * @returns {any}
 */
-export function monte_carlo_dealer_only(upcard, iterations) {
-    const ret = wasm.monte_carlo_dealer_only(upcard, iterations);
+export function simulate_dealer_stand_outcome(upcard, iterations) {
+    const ret = wasm.simulate_dealer_stand_outcome(upcard, iterations);
     return takeObject(ret);
 }
 

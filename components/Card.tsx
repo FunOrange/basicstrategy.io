@@ -1,4 +1,4 @@
-import { type Card, Rank, Suit } from '@/types/blackjack-analyzer-rs';
+import { type Card, Rank, Suit } from '@/types/blackjack-analyzer-js-bindings';
 import { rankToString } from '@/utils/blackjack-utils';
 import { cn } from '@/utils/css';
 import { match } from 'ts-pattern';

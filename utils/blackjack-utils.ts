@@ -6,7 +6,7 @@ import {
   PlayerAction,
   Rank,
   WinReason,
-} from '@/types/blackjack-analyzer-rs';
+} from '@/types/blackjack-analyzer-js-bindings';
 import { match } from 'ts-pattern';
 
 export const playerActionToString = (playerAction: PlayerAction | undefined) =>

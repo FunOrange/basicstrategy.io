@@ -15,7 +15,7 @@ export class BlackjackJsBindings implements WasmBindgen {
   get_dealer_hand_value: (game: BlackjackState) => HandValue = undefined as any;
   get_game_outcome: (game: BlackjackState) => HandOutcome[] = undefined as any;
   monte_carlo: (iterations: number) => void = undefined as any;
-  monte_carlo_dealer_only: (card: number, iterations: number) => Map<number, number> = undefined as any;
+  simulate_dealer_stand_outcome: (card: number, iterations: number) => Map<number, number> = undefined as any;
 
   install_debugging_hook: () => void = undefined as any;
 

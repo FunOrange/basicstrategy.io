@@ -1,4 +1,9 @@
-import { DoubleDownOn, MaxHandsAfterSplit, SplitAces, type BlackjackRuleset } from '@/types/blackjack-analyzer-rs';
+import {
+  DoubleDownOn,
+  MaxHandsAfterSplit,
+  SplitAces,
+  type BlackjackRuleset,
+} from '@/types/blackjack-analyzer-js-bindings';
 
 export const rules: BlackjackRuleset = {
   surrender: true,

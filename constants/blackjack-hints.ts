@@ -1,4 +1,4 @@
-import { BlackjackJsBindings, BlackjackState, PlayerAction, Rank } from '@/types/blackjack-analyzer-rs';
+import { BlackjackJsBindings, BlackjackState, PlayerAction, Rank } from '@/types/blackjack-analyzer-js-bindings';
 import { Pattern, isMatching, match } from 'ts-pattern';
 
 enum Hint {

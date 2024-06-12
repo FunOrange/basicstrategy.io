@@ -1,4 +1,4 @@
-import { BlackjackRuleset } from '@/types/blackjack-analyzer-rs';
+import { BlackjackRuleset } from '@/types/blackjack-analyzer-js-bindings';
 
 export enum Suit {
   Hearts = 'Hearts',

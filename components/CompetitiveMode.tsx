@@ -10,7 +10,7 @@ import {
   type BlackjackState,
   HandValue,
   HandOutcome,
-} from '@/types/blackjack-analyzer-rs';
+} from '@/types/blackjack-analyzer-js-bindings';
 import {
   dealerWillBeDealtBlackjack,
   handOutcomeToString,

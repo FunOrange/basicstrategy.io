@@ -11,7 +11,7 @@ import {
   type BlackjackJsBindings as Blackjack,
   type BlackjackState,
   Rank,
-} from '@/types/blackjack-analyzer-rs';
+} from '@/types/blackjack-analyzer-js-bindings';
 import { handOutcomeToString, playerActionToString, rankToNumber, rankToString } from '@/utils/blackjack-utils';
 import { cn } from '@/utils/css';
 import { sleep } from '@/utils/time';
@@ -290,11 +290,11 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
                             .otherwise(() => undefined) ?? 0;
                         const lessThan17 = playerHandNumber < 17;
 
-                        const iterations = 500_000;
+                        const iterations = 100_000;
                         const { results, runtimeMs } = (() => {
                           if (game.state === GameState.PlayerTurn) {
                             const startTime = performance.now();
-                            const results = Blackjack.monte_carlo_dealer_only(
+                            const results = Blackjack.simulate_dealer_stand_outcome(
                               rankToNumber(game.dealer_hand[0].rank),
                               iterations,
                             );

@@ -1,7 +1,7 @@
 'use client';
 import { CompetitiveMode } from '@/components/CompetitiveMode';
 import { TrainingMode } from '@/components/TrainingMode';
-import { type BlackjackJsBindings as Blackjack } from '@/types/blackjack-analyzer-rs';
+import { type BlackjackJsBindings as Blackjack } from '@/types/blackjack-analyzer-js-bindings';
 import { Button } from 'antd';
 import { useEffect, useState } from 'react';
 
