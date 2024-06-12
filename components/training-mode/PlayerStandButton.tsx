@@ -80,25 +80,24 @@ function renderStandTooltip(Blackjack: Blackjack, game: BlackjackState) {
     simulationResults.filter(({ x, y }) => x > playerHandNumber && x !== 'B').map(({ x, y }) => y),
   );
   const tooltip = (
-    <div className='flex flex-col items-center gap-1'>
+    <div className='flex flex-col items-center gap-1 px-4'>
       {lessThan17 ? (
         <div>
-          Win: <span className='text-green-500'>{winChance}%</span>, Lose:{' '}
+          Win: <span className='text-green-500'>{winChance}%</span> Lose:{' '}
           <span className='text-red-500'>{loseChance}%</span>
         </div>
       ) : (
         <div>
-          Win: <span className='text-green-500'>{winChance}%</span>, Push:{' '}
-          <span className='text-yellow-500'>{pushChance}%</span>, Lose:{' '}
+          Win: <span className='text-green-500'>{winChance}%</span> Push:{' '}
+          <span className='text-yellow-500'>{pushChance}%</span> Lose:{' '}
           <span className='text-red-500'>{loseChance}%</span>
         </div>
       )}
-      <div className='px-2'>
-        <BarGraph data={simulationResults} />
+      <div>
+        When dealer has <b>{rankToString(game.dealer_hand[0]?.rank ?? Rank.Two, true)}</b>, his final hand will be:
       </div>
       <div>
-        Dealer&apos;s final hand when the dealer&apos;s upcard is{' '}
-        <b>{rankToString(game.dealer_hand[0]?.rank ?? Rank.Two, true)}</b>
+        <BarGraph data={simulationResults} />
       </div>
       <div className='text-xs opacity-50'>
         Ran {iterations.toLocaleString()} simulations in {runtimeMs.toFixed(2)} ms

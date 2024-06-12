@@ -105,11 +105,11 @@ function renderHitTooltip(Blackjack: Blackjack, game: BlackjackState) {
   const sameChance = graphData.find(({ x }) => isSame(x))?.y ?? 0;
   const bustChance = graphData.find(({ x }) => x === 'B')?.y ?? 0;
   const tooltip = (
-    <div className='flex flex-col items-center gap-1'>
-      <div>
+    <div className='flex flex-col items-center px-4'>
+      <div className='mb-2'>
         {strongerChance > 0 && (
           <>
-            Stronger: <span className='text-green-500'>{strongerChance}%</span>{' '}
+            Improved hand: <span className='text-green-500'>{strongerChance}%</span>{' '}
           </>
         )}
         {sameChance > 0 && (
@@ -125,9 +125,6 @@ function renderHitTooltip(Blackjack: Blackjack, game: BlackjackState) {
       </div>
       <div className='px-2'>
         <BarGraph data={graphData} />
-      </div>
-      <div>
-        Your hand after hitting on <span className='font-bold'>{handValueToString(playerHandValue)}</span>
       </div>
     </div>
   );
