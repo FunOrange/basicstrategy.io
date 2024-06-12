@@ -2,6 +2,13 @@
 import BarGraph from '@/components/BarGraph';
 import Card from '@/components/Card';
 import FadeOut from '@/components/abstract/FadeOut';
+import DealerHandValueAssist from '@/components/training-mode/DealerHandValueAssist';
+import PlayerDoubleDownButton from '@/components/training-mode/PlayerDoubleDownButton';
+import { PlayerHandValueAssist } from '@/components/training-mode/PlayerHandValueAssist';
+import PlayerHitButton from '@/components/training-mode/PlayerHitButton';
+import PlayerSplitButton from '@/components/training-mode/PlayerSplitButton';
+import PlayerStandButton from '@/components/training-mode/PlayerStandButton';
+import PlayerSurrenderButton from '@/components/training-mode/PlayerSurrenderButton';
 import { getHint, getHintDetails } from '@/constants/blackjack-hints';
 import { rules } from '@/constants/blackjack-rules';
 import useGameAudio from '@/hooks/useGameAudio';
@@ -30,7 +37,7 @@ export interface TrainingModeProps {
 export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
   const play = useGameAudio();
   const [game, setGame] = useState<BlackjackState>();
-  const [allowedActions, setAllowedActions] = useState<PlayerAction[]>([]);
+  const allowedActions = game && game.state === GameState.PlayerTurn ? Blackjack.get_allowed_actions(game) : [];
 
   // #region player feedback
   const [lastDecision, setLastDecision] = useState<{ correct: boolean; correctMove: PlayerAction } | undefined>(
@@ -65,7 +72,7 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handlePlayerAction = async (action: PlayerAction) => {
+  const handlePlayerAction = (action: PlayerAction) => {
     const correctAction = Blackjack.get_optimal_move(game!);
     const actionIsCorrect = action === correctAction;
     if (action === PlayerAction.Hit) {
@@ -92,9 +99,6 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
       game = Blackjack.next_state(game!);
       setGame(game);
     }
-    if (game.state === GameState.PlayerTurn) {
-      setAllowedActions(Blackjack.get_allowed_actions(game));
-    }
   };
 
   if (game !== undefined) {
@@ -108,43 +112,9 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
                 <Card key={i} card={card} />
               ))}
             </div>
-            {(() => {
-              const dealerHandValue = Blackjack.get_dealer_hand_value(game);
-              const color: TagProps['color'] = match(dealerHandValue)
-                .with({ kind: 'Hard' }, (hand) =>
-                  hand.value === 2
-                    ? 'blue'
-                    : hand.value === 3
-                    ? 'cyan'
-                    : hand.value === 4
-                    ? 'lime'
-                    : [5, 6].includes(hand.value)
-                    ? 'green'
-                    : [7, 8, 9].includes(hand.value)
-                    ? undefined
-                    : hand.value === 10
-                    ? 'red'
-                    : undefined,
-                )
-                .with({ kind: 'Soft', value: 11 }, () => 'magenta')
-                .with({ kind: 'Blackjack' }, () => 'warning')
-                .otherwise(() => 'gray');
-              return (
-                <Tooltip
-                  placement='left'
-                  open={showingHint && Boolean(hint?.dealerTooltip)}
-                  title={hint?.dealerTooltip}
-                >
-                  <Tag color={color}>
-                    {match(dealerHandValue)
-                      .with({ kind: 'Hard' }, (hand) => hand.value)
-                      .with({ kind: 'Soft' }, (hand) => hand.value)
-                      .with({ kind: 'Blackjack' }, () => 'Blackjack')
-                      .otherwise(() => undefined)}
-                  </Tag>
-                </Tooltip>
-              );
-            })()}
+            <Tooltip placement='left' open={showingHint && Boolean(hint?.dealerTooltip)} title={hint?.dealerTooltip}>
+              <DealerHandValueAssist dealerHandValue={Blackjack.get_dealer_hand_value(game)} />
+            </Tooltip>
           </div>
           {/* middle */}
           <div className='text-center text-gray-500'>
@@ -190,40 +160,9 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
           </div>
           {/* bottom */}
           <div className='flex flex-col items-center gap-4'>
-            {(() => {
-              const playerHandValue = Blackjack.get_player_hand_value(game);
-              const color: TagProps['color'] = match(playerHandValue)
-                .with({ kind: 'Hard' }, (hand) =>
-                  hand.value <= 2
-                    ? undefined
-                    : [9, 10, 11].includes(hand.value)
-                    ? 'green'
-                    : [12, 13, 14, 15, 16].includes(hand.value)
-                    ? 'yellow'
-                    : hand.value >= 17
-                    ? 'red'
-                    : undefined,
-                )
-                .with({ kind: 'Soft', value: 19 }, () => 'red')
-                .with({ kind: 'Soft', value: 20 }, () => 'red')
-                .with({ kind: 'Blackjack' }, () => 'warning')
-                .otherwise(() => 'gray');
-              return (
-                <Tooltip
-                  title={hint?.playerTooltip}
-                  open={showingHint && Boolean(hint?.playerTooltip)}
-                  placement='left'
-                >
-                  <Tag color={color}>
-                    {match(playerHandValue)
-                      .with({ kind: 'Hard' }, (hand) => hand.value)
-                      .with({ kind: 'Soft' }, (hand) => `${hand.value - 10}/${hand.value}`)
-                      .with({ kind: 'Blackjack' }, () => 'Blackjack')
-                      .otherwise(() => undefined)}
-                  </Tag>
-                </Tooltip>
-              );
-            })()}
+            <Tooltip title={hint?.playerTooltip} open={showingHint && Boolean(hint?.playerTooltip)} placement='left'>
+              <PlayerHandValueAssist playerHandValue={Blackjack.get_player_hand_value(game)} />
+            </Tooltip>
             <div className='flex min-h-[156px] gap-x-60'>
               {game.player_hands.map((hand, i) => (
                 <div key={i} className={cn('flex ml-[-70px]', i !== game.hand_index && 'opacity-40')}>
@@ -263,122 +202,11 @@ export function TrainingMode({ Blackjack, back }: TrainingModeProps) {
               </Button>
             )}
             <div className='grid grid-cols-5 gap-1'>
-              {[
-                PlayerAction.DoubleDown,
-                PlayerAction.Hit,
-                PlayerAction.Stand,
-                PlayerAction.Split,
-                PlayerAction.Surrender,
-              ].map((action, i) => {
-                const isPlayerTurn = game.state === GameState.PlayerTurn;
-                const props: ButtonProps = {
-                  children: playerActionToString(action),
-                };
-                props.disabled = !isPlayerTurn || !allowedActions.includes(action);
-                props.className = cn('h-24', props.disabled && 'opacity-50');
-                props.onClick = () => handlePlayerAction(action);
-                const tooltip = isPlayerTurn
-                  ? match(action)
-                      .with(PlayerAction.DoubleDown, () => 'Double down')
-                      .with(PlayerAction.Hit, () => 'Hit')
-                      .with(PlayerAction.Stand, () => {
-                        const playerHandValue = Blackjack.get_player_hand_value(game);
-                        const playerHandNumber =
-                          match(playerHandValue)
-                            .with({ kind: 'Hard' }, ({ value }) => value)
-                            .with({ kind: 'Soft' }, ({ value }) => value)
-                            .otherwise(() => undefined) ?? 0;
-                        const lessThan17 = playerHandNumber < 17;
-
-                        const iterations = 100_000;
-                        const { results, runtimeMs } = (() => {
-                          if (game.state === GameState.PlayerTurn) {
-                            const startTime = performance.now();
-                            const results = Blackjack.simulate_dealer_stand_outcome(
-                              rankToNumber(game.dealer_hand[0].rank),
-                              iterations,
-                            );
-                            const endTime = performance.now();
-                            return { results, runtimeMs: endTime - startTime };
-                          } else {
-                            return { results: new Map(), runtimeMs: 0 };
-                          }
-                        })();
-                        const entries = Array.from(results.entries());
-                        const truncatedEntries = entries.filter(([key]) => key <= 21);
-                        truncatedEntries.push([
-                          'B',
-                          entries.filter(([key]) => key > 21).reduce((acc, [, value]) => acc + value, 0),
-                        ]);
-                        const simulationResults = truncatedEntries
-                          .map(([key, value]) => {
-                            const normalizedY = value / iterations;
-                            return {
-                              x: key,
-                              y: Math.round(normalizedY * 100),
-                              color:
-                                key < playerHandNumber || key === 'B'
-                                  ? ('green' as const)
-                                  : key === playerHandNumber
-                                  ? ('yellow' as const)
-                                  : ('red' as const),
-                            };
-                          })
-                          .sort((a, b) => (a.x === 'B' ? 1 : b.x === 'B' ? -1 : a.x - b.x));
-
-                        const winChance = sum(
-                          simulationResults
-                            .filter(({ x, y }) => x < playerHandNumber || x === 'B')
-                            .map(({ x, y }) => y),
-                        );
-                        const pushChance = sum(
-                          simulationResults.filter(({ x, y }) => x === playerHandNumber).map(({ x, y }) => y),
-                        );
-                        const loseChance = sum(
-                          simulationResults
-                            .filter(({ x, y }) => x > playerHandNumber && x !== 'B')
-                            .map(({ x, y }) => y),
-                        );
-                        const tooltip = (
-                          <div className='flex flex-col items-center gap-1'>
-                            <div>
-                              When the dealer&apos;s upcard is{' '}
-                              <b>{rankToString(game.dealer_hand[0]?.rank ?? Rank.Two, true)}</b>, dealer&apos;s final
-                              hand will be:
-                            </div>
-                            <div className='px-2'>
-                              <BarGraph data={simulationResults} />
-                              <div className='text-xs opacity-50'>
-                                Ran {iterations.toLocaleString()} simulations in {runtimeMs.toFixed(2)} ms
-                              </div>
-                            </div>
-                            {lessThan17 ? (
-                              <div>
-                                Win: <span className='text-green-500'>{winChance}%</span>, Lose:{' '}
-                                <span className='text-red-500'>{loseChance}%</span>
-                              </div>
-                            ) : (
-                              <div>
-                                Win: <span className='text-green-500'>{winChance}%</span>, Push:{' '}
-                                <span className='text-yellow-500'>{pushChance}%</span>, Lose:{' '}
-                                <span className='text-red-500'>{loseChance}%</span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                        return tooltip;
-                      })
-                      .otherwise(() => undefined)
-                  : undefined;
-                const showTooltip = !props.disabled && Boolean(tooltip);
-                return showTooltip ? (
-                  <Tooltip key={i} title={tooltip} placement='bottom'>
-                    <Button {...props} />
-                  </Tooltip>
-                ) : (
-                  <Button key={i} {...props} />
-                );
-              })}
+              <PlayerDoubleDownButton Blackjack={Blackjack} game={game} handlePlayerAction={handlePlayerAction} />
+              <PlayerHitButton Blackjack={Blackjack} game={game} handlePlayerAction={handlePlayerAction} />
+              <PlayerStandButton Blackjack={Blackjack} game={game} handlePlayerAction={handlePlayerAction} />
+              <PlayerSplitButton Blackjack={Blackjack} game={game} handlePlayerAction={handlePlayerAction} />
+              <PlayerSurrenderButton Blackjack={Blackjack} game={game} handlePlayerAction={handlePlayerAction} />
             </div>
           </div>
           <Tooltip trigger='hover' title={hint?.hint} open={showingHint} onOpenChange={(open) => setShowingHint(open)}>
