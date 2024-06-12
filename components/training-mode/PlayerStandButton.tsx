@@ -81,16 +81,6 @@ function renderStandTooltip(Blackjack: Blackjack, game: BlackjackState) {
   );
   const tooltip = (
     <div className='flex flex-col items-center gap-1'>
-      <div>
-        When the dealer&apos;s upcard is <b>{rankToString(game.dealer_hand[0]?.rank ?? Rank.Two, true)}</b>,
-        dealer&apos;s final hand will be:
-      </div>
-      <div className='px-2'>
-        <BarGraph data={simulationResults} />
-        <div className='text-xs opacity-50'>
-          Ran {iterations.toLocaleString()} simulations in {runtimeMs.toFixed(2)} ms
-        </div>
-      </div>
       {lessThan17 ? (
         <div>
           Win: <span className='text-green-500'>{winChance}%</span>, Lose:{' '}
@@ -103,6 +93,16 @@ function renderStandTooltip(Blackjack: Blackjack, game: BlackjackState) {
           <span className='text-red-500'>{loseChance}%</span>
         </div>
       )}
+      <div className='px-2'>
+        <BarGraph data={simulationResults} />
+      </div>
+      <div>
+        Dealer&apos;s final hand when the dealer&apos;s upcard is{' '}
+        <b>{rankToString(game.dealer_hand[0]?.rank ?? Rank.Two, true)}</b>
+      </div>
+      <div className='text-xs opacity-50'>
+        Ran {iterations.toLocaleString()} simulations in {runtimeMs.toFixed(2)} ms
+      </div>
     </div>
   );
   return tooltip;

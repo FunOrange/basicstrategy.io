@@ -89,11 +89,15 @@ function renderHitTooltip(Blackjack: Blackjack, game: BlackjackState) {
 
   const bustChance = graphData[graphData.length - 1].y;
   const tooltip = (
-    <div className='flex flex-col items-center'>
-      <div>Your hand after hitting:</div>
+    <div className='flex flex-col items-center gap-1'>
+      <div>
+        Safe: <span className='text-green-500'>{100 - bustChance}%</span> Bust:{' '}
+        <span className='text-red-500'>{bustChance}%</span>
+      </div>
       <div className='px-2'>
         <BarGraph data={graphData} />
       </div>
+      <div>Your hand after hitting</div>
     </div>
   );
   return tooltip;
