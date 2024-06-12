@@ -8,9 +8,10 @@ import {
   GameState,
   Rank,
 } from '@/types/blackjack-analyzer-js-bindings';
+import { sumReducer } from '@/utils/array-utils';
 import { handValueToString, rankToNumber, rankToString } from '@/utils/blackjack-utils';
 import { Tooltip } from 'antd';
-import { isNotNil, map, sum } from 'ramda';
+import { is, isNotNil, map, sum } from 'ramda';
 import { ReactNode, useState } from 'react';
 import { isMatching, match } from 'ts-pattern';
 
@@ -81,18 +82,46 @@ function renderHitTooltip(Blackjack: Blackjack, game: BlackjackState) {
   }
   entries = entries.map(([key, value]) => [key, Math.round(value)]);
 
+  const isStronger = (key: string) => parseInt(key.replace('S', '')) > playerHandNumber;
+  const isSame = (key: string) => parseInt(key.replace('S', '')) === playerHandNumber;
+  const isWeaker = (key: string) => parseInt(key.replace('S', '')) < playerHandNumber;
+  const isBust = (key: string) => key === 'B';
   const graphData = entries.map(([key, value]) => ({
     x: key,
     y: value,
-    color: key === 'B' ? ('red' as const) : ('green' as const),
+    color: isBust(key)
+      ? ('red' as const)
+      : isStronger(key)
+      ? ('green' as const)
+      : isWeaker(key)
+      ? ('white' as const)
+      : ('yellow' as const),
   }));
 
+  const strongerChance = graphData
+    .filter(({ x }) => isStronger(x))
+    .map(({ y }) => y)
+    .reduce(sumReducer, 0);
+  const sameChance = graphData.find(({ x }) => isSame(x))?.y ?? 0;
   const bustChance = graphData.find(({ x }) => x === 'B')?.y ?? 0;
   const tooltip = (
     <div className='flex flex-col items-center gap-1'>
       <div>
-        Safe: <span className='text-green-500'>{100 - bustChance}%</span> Bust:{' '}
-        <span className='text-red-500'>{bustChance}%</span>
+        {strongerChance > 0 && (
+          <>
+            Stronger: <span className='text-green-500'>{strongerChance}%</span>{' '}
+          </>
+        )}
+        {sameChance > 0 && (
+          <>
+            Same: <span className='text-yellow-500'>{sameChance}%</span>{' '}
+          </>
+        )}
+        {bustChance > 0 && (
+          <>
+            Bust: <span className='text-red-500'>{bustChance}%</span>{' '}
+          </>
+        )}
       </div>
       <div className='px-2'>
         <BarGraph data={graphData} />

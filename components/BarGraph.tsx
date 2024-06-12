@@ -2,7 +2,11 @@ import { cn } from '@/utils/css';
 import { match } from 'ts-pattern';
 
 export interface BarGraphProps {
-  data: { x: string | number; y: number; color?: 'red' | 'yellow' | 'white' | 'green' }[];
+  data: {
+    x: string | number;
+    y: number;
+    color?: 'red' | 'orange' | 'yellow' | 'white' | 'green' | 'slate' | 'pink' | 'rose';
+  }[];
 }
 export default function BarGraph({ data }: BarGraphProps) {
   return (
@@ -13,9 +17,13 @@ export default function BarGraph({ data }: BarGraphProps) {
         const { textColor, bgColor } = color
           ? match(color)
               .with('red', () => ({ textColor: 'text-red-500', bgColor: 'bg-red-500' }))
+              .with('pink', () => ({ textColor: 'text-pink-500', bgColor: 'bg-pink-500' }))
+              .with('rose', () => ({ textColor: 'text-rose-500', bgColor: 'bg-rose-500' }))
+              .with('orange', () => ({ textColor: 'text-orange-500', bgColor: 'bg-orange-500' }))
               .with('yellow', () => ({ textColor: 'text-yellow-500', bgColor: 'bg-yellow-500' }))
-              .with('white', () => ({ textColor: 'text-white-500', bgColor: 'bg-white-500' }))
+              .with('white', () => ({ textColor: 'text-gray-100', bgColor: 'bg-gray-100' }))
               .with('green', () => ({ textColor: 'text-green-500', bgColor: 'bg-green-500' }))
+              .with('slate', () => ({ textColor: 'text-slate-500', bgColor: 'bg-slate-500' }))
               .exhaustive()
           : { textColor: 'text-white-500', bgColor: 'bg-white-500' };
         return (
