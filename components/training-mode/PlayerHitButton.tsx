@@ -8,7 +8,7 @@ import {
   GameState,
   Rank,
 } from '@/types/blackjack-analyzer-js-bindings';
-import { rankToNumber, rankToString } from '@/utils/blackjack-utils';
+import { handValueToString, rankToNumber, rankToString } from '@/utils/blackjack-utils';
 import { Tooltip } from 'antd';
 import { isNotNil, map, sum } from 'ramda';
 import { ReactNode, useState } from 'react';
@@ -87,7 +87,7 @@ function renderHitTooltip(Blackjack: Blackjack, game: BlackjackState) {
     color: key === 'B' ? ('red' as const) : ('green' as const),
   }));
 
-  const bustChance = graphData[graphData.length - 1].y;
+  const bustChance = graphData.find(({ x }) => x === 'B')?.y ?? 0;
   const tooltip = (
     <div className='flex flex-col items-center gap-1'>
       <div>
@@ -97,7 +97,9 @@ function renderHitTooltip(Blackjack: Blackjack, game: BlackjackState) {
       <div className='px-2'>
         <BarGraph data={graphData} />
       </div>
-      <div>Your hand after hitting</div>
+      <div>
+        Your hand after hitting on <span className='font-bold'>{handValueToString(playerHandValue)}</span>
+      </div>
     </div>
   );
   return tooltip;

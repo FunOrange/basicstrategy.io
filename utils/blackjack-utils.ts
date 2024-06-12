@@ -2,6 +2,7 @@ import {
   BlackjackState,
   Card,
   HandOutcome,
+  HandValue,
   LossReason,
   PlayerAction,
   Rank,
@@ -30,6 +31,13 @@ export const handOutcomeToString = (handOutcome: HandOutcome) =>
     .with({ kind: 'Lost', reason: LossReason.LowerHand }, () => 'You lost.')
     .with({ kind: 'Push' }, () => 'Push.')
     .with({ kind: 'Surrendered' }, () => 'Surrender.')
+    .exhaustive();
+
+export const handValueToString = (handValue: HandValue) =>
+  match(handValue)
+    .with({ kind: 'Hard' }, ({ value }) => `hard ${value}`)
+    .with({ kind: 'Soft' }, ({ value }) => `soft ${value}`)
+    .with({ kind: 'Blackjack' }, () => 'You won!')
     .exhaustive();
 
 export const playerWillBeDealtBlackjack = (game: BlackjackState) => {
