@@ -101,9 +101,14 @@ function renderHitTooltip(Blackjack: Blackjack, game: BlackjackState) {
     color: x === 'B' ? ('green' as const) : ('white' as const),
   }));
   const leftPadding: typeof dealerGraphData = [];
-  for (const key of playerPdf.map(([key]) => (typeof key === 'number' ? key : undefined)).filter(Boolean)) {
-    if (key !== undefined && !dealerPdf.find(({ x }) => x === key)) {
-      leftPadding.push({ x: key, y: 0, color: 'white' });
+  const softToHard = (x: string | number) =>
+    typeof x === 'string' && x.startsWith('S') ? parseInt(x.slice(1)) : (x as number);
+  for (const key of playerPdf.map(([key]) => (key !== 'B' ? key : undefined)).filter(Boolean)) {
+    if (key !== undefined) {
+      const hard = softToHard(key);
+      if (!dealerPdf.find(({ x }) => x === hard)) {
+        leftPadding.push({ x: hard, y: 0, color: 'white' });
+      }
     }
   }
   dealerGraphData = [...leftPadding, ...dealerGraphData];
@@ -127,6 +132,7 @@ function renderHitTooltip(Blackjack: Blackjack, game: BlackjackState) {
     }
   }
   playerGraphData = paddedPlayerGraphData;
+  playerGraphData.sort((a, b) => (a.x === 'B' ? 1 : b.x === 'B' ? -1 : softToHard(a.x) - softToHard(b.x)));
 
   const tooltip = (
     <div className='flex flex-col items-center px-4'>

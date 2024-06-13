@@ -32,7 +32,7 @@ export default function BarGraph({ data, hideXAxis }: BarGraphProps) {
           <div key={x} className='flex flex-col items-center justify-end gap-1 h-[100px] w-7'>
             <div className={cn('text-xs', textColor)}>{y ? `${y}%` : undefined}</div>
             <div className={cn('w-full', bgColor)} style={{ height: `${Math.round(yPercent)}%` }} />
-            {!hideXAxis && <div className={cn('text-xs', textColor)}>{x}</div>}
+            {!hideXAxis && <div className={cn('text-xs', textColor)}>{y ? x : undefined}</div>}
           </div>
         );
       })}
