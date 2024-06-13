@@ -25,7 +25,7 @@ import { useEffect, useRef, useState } from 'react';
 import { isMatching, match } from 'ts-pattern';
 
 const GAME_DURATION_SECONDS = 60;
-const GAME_TICK_MS = 220;
+const GAME_TICK_MS = 180;
 
 interface Decision {
   dealerHand: HandValue;

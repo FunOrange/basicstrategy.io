@@ -203,7 +203,7 @@ export const getHintDetails = (
     .with(Hint.AlwaysSplitEights, () => ({
       dealerTooltip: '',
       playerTooltip: '',
-      hint: 'ALWAYS SPLIT 8s',
+      hint: 'ALWAYS SPLIT EIGHTS',
     }))
     .otherwise(() => undefined);
 };

@@ -9,7 +9,7 @@ import {
   Rank,
 } from '@/types/blackjack-analyzer-js-bindings';
 import { sumReducer } from '@/utils/array-utils';
-import { handValueToString, rankToNumber, rankToString } from '@/utils/blackjack-utils';
+import { handValueToString, hitPdf, rankToNumber, rankToString } from '@/utils/blackjack-utils';
 import { Tooltip } from 'antd';
 import { is, isNotNil, map, sum } from 'ramda';
 import { ReactNode, useState } from 'react';
@@ -22,6 +22,8 @@ export interface PlayerHitButtonProps extends Omit<PlayerActionButtonProps, 'act
 }
 export default function PlayerHitButton(props: PlayerHitButtonProps) {
   const isPlayerTurn = props.game.state === GameState.PlayerTurn;
+  const allowedActions = isPlayerTurn ? props.Blackjack.get_allowed_actions(props.game) : [];
+  const disabled = !isPlayerTurn || !allowedActions.includes(PlayerAction.Hit);
   const [tooltip, setTooltip] = useState<ReactNode>(undefined);
   return (
     <div
@@ -30,8 +32,9 @@ export default function PlayerHitButton(props: PlayerHitButtonProps) {
         if (isPlayerTurn) setTooltip(renderHitTooltip(props.Blackjack, props.game));
       }}
       onMouseLeave={() => setTooltip(undefined)}
+      onClick={() => setTooltip(undefined)}
     >
-      <Tooltip trigger='hover' placement='bottom' open={isPlayerTurn && isNotNil(tooltip)} title={tooltip}>
+      <Tooltip trigger='hover' placement='bottom' open={!disabled && isNotNil(tooltip)} title={tooltip}>
         <PlayerActionButton action={PlayerAction.Hit} {...props} />
       </Tooltip>
     </div>
@@ -45,81 +48,59 @@ function renderHitTooltip(Blackjack: Blackjack, game: BlackjackState) {
       .with({ kind: 'Soft' }, ({ value }) => value)
       .otherwise(() => undefined) ?? 0;
 
-  let entries: [string, number][] = [];
-  if (isMatching({ kind: 'Soft' }, playerHandValue)) {
-    for (let card = 1; card <= 10; card++) {
-      const probability = card === 10 ? 4 / 13 : 1 / 13;
-      const withAceAsTen = playerHandNumber + card;
-      const withAceAsOne = playerHandNumber + card - 10;
-      const key = withAceAsTen < 21 ? `S${withAceAsTen}` : withAceAsOne <= 21 ? withAceAsOne.toString() : 'B';
-      if (key === 'B') {
-        const existingEntry = entries.find(([key]) => key === 'B');
-        if (existingEntry) {
-          existingEntry[1] += probability * 100;
-        } else {
-          entries.push(['B', probability * 100]);
-        }
-      } else {
-        entries.push([key, probability * 100]);
-      }
-    }
-  } else if (isMatching({ kind: 'Hard' }, playerHandValue)) {
-    for (let card = 1; card <= 10; card++) {
-      const probability = card === 10 ? 4 / 13 : 1 / 13;
-      const afterHit = playerHandNumber + card;
-      const key = afterHit <= 21 ? afterHit.toString() : 'B';
-      if (key === 'B') {
-        const existingEntry = entries.find(([key]) => key === 'B');
-        if (existingEntry) {
-          existingEntry[1] += probability * 100;
-        } else {
-          entries.push(['B', probability * 100]);
-        }
-      } else {
-        entries.push([key, probability * 100]);
-      }
-    }
-  }
-  entries = entries.map(([key, value]) => [key, Math.round(value)]);
+  const softToHard = (hand: string | number) =>
+    typeof hand === 'string' && hand.startsWith('S')
+      ? parseInt(hand.slice(1))
+      : typeof hand === 'string'
+      ? ('B' as const)
+      : hand;
 
-  const isStronger = (key: string) => parseInt(key.replace('S', '')) > playerHandNumber;
-  const isSame = (key: string) => parseInt(key.replace('S', '')) === playerHandNumber;
-  const isWeaker = (key: string) => parseInt(key.replace('S', '')) < playerHandNumber;
-  const isBust = (key: string) => key === 'B';
-  const graphData = entries.map(([key, value]) => ({
+  let pdf = hitPdf(Blackjack, game);
+
+  const isStronger = (key: string | number) => {
+    const hard = softToHard(key);
+    return hard !== 'B' && hard > playerHandNumber;
+  };
+  const isSame = (key: string | number) => softToHard(key) === playerHandNumber;
+  const isWeaker = (key: string | number) => {
+    const hard = softToHard(key);
+    return hard !== 'B' && hard < playerHandNumber;
+  };
+  const graphData = pdf.map(([key, value]) => ({
     x: key,
-    y: value,
-    color: isBust(key)
-      ? ('red' as const)
-      : isStronger(key)
-      ? ('green' as const)
-      : isWeaker(key)
-      ? ('white' as const)
-      : ('yellow' as const),
+    y: Math.round(value),
+    color:
+      key === 'B'
+        ? ('red' as const)
+        : isStronger(key)
+        ? ('green-200' as const)
+        : isWeaker(key)
+        ? ('white' as const)
+        : ('yellow' as const),
   }));
 
-  const strongerChance = graphData
-    .filter(({ x }) => isStronger(x))
-    .map(({ y }) => y)
+  const strongerChance = pdf
+    .filter(([x]) => isStronger(x))
+    .map(([x, y]) => y)
     .reduce(sumReducer, 0);
-  const sameChance = graphData.find(({ x }) => isSame(x))?.y ?? 0;
-  const bustChance = graphData.find(({ x }) => x === 'B')?.y ?? 0;
+  const sameChance = pdf.find(([x]) => isSame(x))?.[1] ?? 0;
+  const bustChance = pdf.find(([x]) => x === 'B')?.[1] ?? 0;
   const tooltip = (
     <div className='flex flex-col items-center px-4'>
       <div className='mb-2'>
         {strongerChance > 0 && (
           <>
-            Improved hand: <span className='text-green-500'>{strongerChance}%</span>{' '}
+            Improved hand: <span className='text-green-200'>{Math.round(strongerChance)}%</span>{' '}
           </>
         )}
         {sameChance > 0 && (
           <>
-            Same: <span className='text-yellow-500'>{sameChance}%</span>{' '}
+            Same: <span className='text-yellow-500'>{Math.round(sameChance)}%</span>{' '}
           </>
         )}
         {bustChance > 0 && (
           <>
-            Bust: <span className='text-red-500'>{bustChance}%</span>{' '}
+            Bust: <span className='text-red-500'>{Math.round(bustChance)}%</span>{' '}
           </>
         )}
       </div>

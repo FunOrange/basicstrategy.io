@@ -1,4 +1,5 @@
 import {
+  type BlackjackJsBindings as Blackjack,
   BlackjackState,
   Card,
   HandOutcome,
@@ -8,7 +9,7 @@ import {
   Rank,
   WinReason,
 } from '@/types/blackjack-analyzer-js-bindings';
-import { match } from 'ts-pattern';
+import { isMatching, match } from 'ts-pattern';
 
 export const playerActionToString = (playerAction: PlayerAction | undefined) =>
   playerAction
@@ -27,7 +28,7 @@ export const handOutcomeToString = (handOutcome: HandOutcome) =>
     .with({ kind: 'Won', reason: WinReason.DealerBust }, () => 'Dealer bust!')
     .with({ kind: 'Won', reason: WinReason.HigherHand }, () => 'You won!')
     .with({ kind: 'Lost', reason: LossReason.Bust }, () => 'Bust.')
-    .with({ kind: 'Lost', reason: LossReason.DealerBlackjack }, () => 'Dealer got blackjack.')
+    .with({ kind: 'Lost', reason: LossReason.DealerBlackjack }, () => 'Dealer has blackjack.')
     .with({ kind: 'Lost', reason: LossReason.LowerHand }, () => 'You lost.')
     .with({ kind: 'Push' }, () => 'Push.')
     .with({ kind: 'Surrendered' }, () => 'Surrender.')
@@ -96,3 +97,67 @@ export const rankToNumber = (rank: Rank) =>
     .with(Rank.Queen, () => 10)
     .with(Rank.King, () => 10)
     .exhaustive();
+
+export const hitPdf = (Blackjack: Blackjack, game: BlackjackState) => {
+  const playerHandValue = Blackjack.get_player_hand_value(game);
+  const playerHandNumber =
+    match(playerHandValue)
+      .with({ kind: 'Hard' }, ({ value }) => value)
+      .with({ kind: 'Soft' }, ({ value }) => value)
+      .otherwise(() => undefined) ?? 0;
+
+  let entries: [string | number, number][] = [];
+  if (isMatching({ kind: 'Soft' }, playerHandValue)) {
+    for (let card = 1; card <= 10; card++) {
+      const probability = card === 10 ? 4 / 13 : 1 / 13;
+      const withAceAsTen = playerHandNumber + card;
+      const withAceAsOne = playerHandNumber + card - 10;
+      const key = withAceAsTen < 21 ? `S${withAceAsTen}` : withAceAsOne <= 21 ? withAceAsOne : 'B';
+      if (key === 'B') {
+        const existingEntry = entries.find(([key]) => key === 'B');
+        if (existingEntry) {
+          existingEntry[1] += probability * 100;
+        } else {
+          entries.push(['B', probability * 100]);
+        }
+      } else {
+        entries.push([key, probability * 100]);
+      }
+    }
+  } else if (isMatching({ kind: 'Hard' }, playerHandValue)) {
+    for (let card = 1; card <= 10; card++) {
+      const probability = card === 10 ? 4 / 13 : 1 / 13;
+      const afterHit = playerHandNumber + card;
+      const key = afterHit <= 21 ? afterHit : 'B';
+      if (key === 'B') {
+        const existingEntry = entries.find(([key]) => key === 'B');
+        if (existingEntry) {
+          existingEntry[1] += probability * 100;
+        } else {
+          entries.push(['B', probability * 100]);
+        }
+      } else {
+        entries.push([key, probability * 100]);
+      }
+    }
+  }
+  return entries;
+};
+
+export const dealerHandPdf = (Blackjack: Blackjack, game: BlackjackState, iterations: number) => {
+  const startTime = performance.now();
+  const results = Blackjack.simulate_dealer_stand_outcome(rankToNumber(game.dealer_hand[0].rank), iterations);
+  const endTime = performance.now();
+  const runtimeMs = endTime - startTime;
+
+  const entries = Array.from(results.entries());
+  const truncatedEntries: [number | 'B', number][] = entries.filter(([key]) => key <= 21);
+  truncatedEntries.push(['B', entries.filter(([key]) => key > 21).reduce((acc, [, value]) => acc + value, 0)]);
+  const pdf = truncatedEntries
+    .map(([key, value]) => ({
+      x: key,
+      y: (value / iterations) * 100,
+    }))
+    .sort((a, b) => (a.x === 'B' ? 1 : b.x === 'B' ? -1 : a.x - b.x));
+  return { pdf, runtimeMs };
+};
